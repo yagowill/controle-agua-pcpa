@@ -1,58 +1,84 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
+
+# 🚰 SCEA — Sistema de Controle de Entrega de Água
+
+![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![Inertia.js](https://img.shields.io/badge/Inertia.js-v1.0-9553E9?style=for-the-badge&logo=inertia&logoColor=white)
+![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white)
+![Vuetify](https://img.shields.io/badge/Vuetify-3.x-1867C0?style=for-the-badge&logo=vuetify&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <b>Aplicação Web corporativa para modernização e gestão do fluxo de distribuição de garrafões de água do Almoxarifado da Polícia Civil do Estado do Pará (PCPA).</b>
 </p>
 
-## About Laravel
+</div>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📌 Sobre o Projeto
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+O **SCEA (Sistema de Controle de Entrega de Água)** foi desenvolvido para substituir processos manuais em papel e planilhas por uma solução digital auditável, ágil e segura. O sistema automatiza o recebimento de garrafões vazios, o fornecimento de garrafões cheios, a emissão de protocolos com QR Code e o controle estatístico do consumo por setor e delegacia.
 
-## Learning Laravel
+### 🎯 Principais Objetivos
+* **Eliminação do Papel:** Emissão de comprovantes digitais (PNG/WhatsApp) com código QR único.
+* **Segurança Anti-Reuso:** Trava estrita no banco de dados que impede a dupla retirada com o mesmo comprovante.
+* **Agilidade no "Bate Volta":** Registro em etapa única para trocas imediatas por setores distantes.
+* **Rastreabilidade e Gestão:** Histórico completo de atendimentos e geração de relatórios de consumo mensal e anual.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🚀 Stack Tecnológica
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+O projeto adota a arquitetura de **Monólito Moderno (SPA)**, combinando a robustez do ecossistema Laravel no backend com a reatividade do Vue 3 no frontend através do Inertia.js.
 
-## Agentic Development
+* **Backend:** PHP 8.2+ / [Laravel 11](https://laravel.com/)
+* **Bridge (SPA):** [Inertia.js](https://inertiajs.com/)
+* **Frontend:** [Vue.js 3](https://vuejs.org/) (Composition API / `<script setup>`)
+* **UI Framework:** [Vuetify 3](https://vuetifyjs.com/) (Material Design adaptado à identidade visual da PCPA)
+* **Banco de Dados:** MySQL 8.0+ (Desenvolvimento local) / PostgreSQL (Produção)
+* **Bibliotecas Auxiliares:** `html5-qrcode` (leitura de QR Code via câmera) e `html2canvas` (exportação de comprovantes para imagem).
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
 
-```bash
-composer require laravel/boost --dev
+## 🛠️ Regras de Negócio & Funcionalidades
 
-php artisan boost:install
-```
+### 1. Fluxo Padrão (2 Etapas)
+* **Entrada:** Registro do garrafão seco ➔ Geração do protocolo sequencial (`PCPA-YYYY-XXXX`) ➔ Cálculo automático da data estimada de devolução (próxima segunda ou quinta-feira) ➔ Status: `DISPONIVEL`.
+* **Saída:** Leitura do QR Code ➔ Registro do recebedor e atendente ➔ Atualização para o status: `CONCLUIDO`.
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Fluxo Bate Volta (Troca Imediata)
+* Registro unificado de entrada e saída em um único passo para entregas diretas ➔ Status gerado diretamente como `CONCLUIDO`.
 
-## Contributing
+### 3. Trava de Segurança Anti-Reuso
+* Se um protocolo com status `CONCLUIDO` for lido novamente, o sistema bloqueia a operação e exibe a data, o horário exato e o nome do servidor que realizou a baixa anterior.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 4. Relatórios e Indicadores
+* Painel consolidado com estatísticas de consumo mensal/anual por setor, filtros avançados e exportação de dados em formato **CSV**.
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 🎨 Identidade Visual (SRH / PCPA)
 
-## Security Vulnerabilities
+A interface segue o Padrão Visual Institucional dos Sistemas da Polícia Civil do Pará:
+* **Azul Institucional (`#2b6cb0`):** Botões de ação e destaques principais.
+* **Grafite Escuro (`#212529`):** Barra de navegação superior (Top Bar SRH).
+* **Cinza Neutro (`#f8f9fa`):** Fundo limpo e cartões em Material Design.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## 💻 Como Executar o Projeto Localmente
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Pré-requisitos
+* PHP >= 8.2
+* Composer
+* Node.js >= 18.x e npm
+* Servidor MySQL (ex: [Laragon](https://laragon.org/), XAMPP ou Docker)
+
+### Passo a Passo
+
+1. **Clonar o Repositório:**
+   ```bash
+   git clone [https://github.com/SEU-USUARIO/scea-controle-agua-pcpa.git](https://github.com/SEU-USUARIO/scea-controle-agua-pcpa.git)
+   cd scea-controle-agua-pcpa

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('water_deliveries', function (Blueprint $table) {
             $table->id();
-            $table->string('order_number')->unique(); // Ex: PCPA-2026-0001
+            $table->string('order_number')->unique();
             $table->enum('operation_type', ['PADRAO', 'BATE_VOLTA'])->default('PADRAO');
             $table->string('sector');
             $table->integer('empty_bottles_count');
