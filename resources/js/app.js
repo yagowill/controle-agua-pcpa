@@ -1,3 +1,6 @@
+// Configuração do Vuetify 3 & Ícones MDI
+import 'vuetify/styles';
+import '@mdi/font/css/materialdesignicons.css';
 import '../css/app.css';
 import './bootstrap';
 
@@ -5,10 +8,6 @@ import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
-
-// Configuração do Vuetify 3 & Ícones MDI
-import 'vuetify/styles';
-import '@mdi/font/css/materialdesignicons.css';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
@@ -38,7 +37,7 @@ const vuetify = createVuetify({
     },
 });
 
-const appName = import.meta.env.VITE_APP_NAME || 'SGA - PCPA';
+const appName = import.meta.env.VITE_APP_NAME || 'SCEA - PCPA';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,

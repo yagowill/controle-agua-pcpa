@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Evita que Tailwind preflight resete propriedades críticas do Vuetify */
+.v-application,
+.v-application * {
+  box-sizing: border-box;
+}

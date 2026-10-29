@@ -1,22 +1,28 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\WaterDeliveryController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
+// Redireciona a raiz para a tela principal do SCEA
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return redirect()->route('entregas.nova');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Rotas do SCEA (Controle de Entrega de Água - Almoxarifado PCPA)
+Route::prefix('entregas')->name('entregas.')->group(function () {
+    // Nova Entrega
+    Route::get('/nova', [WaterDeliveryController::class, 'index'])->name('nova');
+    Route::post('/', [WaterDeliveryController::class, 'store'])->name('store');
+
+    // Validação e Baixa
+    Route::get('/baixa', [WaterDeliveryController::class, 'baixaPage'])->name('baixa');
+    Route::get('/api/search/{orderNumber}', [WaterDeliveryController::class, 'searchOrder'])->name('api.search');
+    Route::post('/redeem/{orderNumber}', [WaterDeliveryController::class, 'redeem'])->name('redeem');
+
+    // Relatórios e Histórico
+    Route::get('/relatorios', [WaterDeliveryController::class, 'relatoriosPage'])->name('relatorios');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
