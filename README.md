@@ -55,11 +55,11 @@ O projeto adota a arquitetura de **Monólito Moderno (SPA)**, combinando a robus
 * Se um protocolo com status `CONCLUIDO` for lido novamente, o sistema bloqueia a operação e exibe a data, o horário exato e o nome do servidor que realizou a baixa anterior.
 
 ### 4. Relatórios e Indicadores
-* Painel consolidado com estatísticas de consumo mensal/anual por setor, filtros avançados e exportação de dados em formato **CSV**.
+* Painel consolidado com estatísticas de consumo mensal/anual por setor, filtros avançados e exportação de dados em formato **PDF**.
 
 ---
 
-## 🎨 Identidade Visual (SRH / PCPA)
+## 🎨 Identidade Visual (PCPA)
 
 A interface segue o Padrão Visual Institucional dos Sistemas da Polícia Civil do Pará:
 * **Azul Institucional (`#2b6cb0`):** Botões de ação e destaques principais.
