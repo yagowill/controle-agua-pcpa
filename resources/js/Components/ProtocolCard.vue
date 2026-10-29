@@ -15,37 +15,37 @@
       </div>
 
       <!-- Linhas de Dados em Estilo Formulário/Recibo -->
-      <div class="ticket-body text-caption font-mono font-weight-bold leading-tight">
-        <div class="d-flex justify-space-between border-dashed-bottom py-1">
-          <span class="text-grey-darken-3">LOCAL:</span>
-          <span class="text-black text-truncate text-uppercase" style="max-width: 170px;">
+      <div class="ticket-body text-caption font-mono font-weight-bold">
+        <div class="ticket-row border-dashed-bottom">
+          <span class="text-grey-darken-3 label-col">LOCAL:</span>
+          <span class="text-black text-right value-col">
             {{ delivery.sector || '---' }}
           </span>
         </div>
 
-        <div class="d-flex justify-space-between border-dashed-bottom py-1">
-          <span class="text-grey-darken-3">QUANTIDADE:</span>
-          <span class="text-black font-weight-black">{{ delivery.empty_bottles_count || 1 }}</span>
+        <div class="ticket-row border-dashed-bottom">
+          <span class="text-grey-darken-3 label-col">QUANTIDADE:</span>
+          <span class="text-black font-weight-black value-col text-right">{{ delivery.empty_bottles_count || 1 }}</span>
         </div>
 
-        <div class="d-flex justify-space-between border-dashed-bottom py-1">
-          <span class="text-grey-darken-3">DATA ENTREGA:</span>
-          <span class="text-black">{{ formatDate(delivery.reception_date) }}</span>
+        <div class="ticket-row border-dashed-bottom">
+          <span class="text-grey-darken-3 label-col">DATA ENTREGA:</span>
+          <span class="text-black value-col text-right">{{ formatDate(delivery.reception_date) }}</span>
         </div>
 
-        <div v-if="delivery.operation_type !== 'BATE_VOLTA'" class="d-flex justify-space-between border-dashed-bottom py-1">
-          <span class="text-grey-darken-3">PREVISÃO P/ ÁGUA:</span>
-          <span class="text-black font-weight-bold">{{ formatDate(delivery.estimated_date) }}</span>
+        <div v-if="delivery.operation_type !== 'BATE_VOLTA'" class="ticket-row border-dashed-bottom">
+          <span class="text-grey-darken-3 label-col">PREVISÃO P/ ÁGUA:</span>
+          <span class="text-black font-weight-bold value-col text-right">{{ formatDate(delivery.estimated_date) }}</span>
         </div>
 
-        <div class="d-flex justify-space-between border-dashed-bottom py-1">
-          <span class="text-grey-darken-3">Nº DE ORDEM:</span>
-          <span class="text-black font-weight-black">{{ delivery.order_number || '#0000' }}</span>
+        <div class="ticket-row border-dashed-bottom">
+          <span class="text-grey-darken-3 label-col">Nº DE ORDEM:</span>
+          <span class="text-black font-weight-black value-col text-right">{{ delivery.order_number || '#0000' }}</span>
         </div>
 
-        <div class="d-flex justify-space-between py-1">
-          <span class="text-grey-darken-3">TIPO:</span>
-          <span class="text-black">{{ delivery.operation_type === 'BATE_VOLTA' ? 'BATE VOLTA' : 'PADRÃO (2 ETAPAS)' }}</span>
+        <div class="ticket-row">
+          <span class="text-grey-darken-3 label-col">TIPO:</span>
+          <span class="text-black value-col text-right">{{ delivery.operation_type === 'BATE_VOLTA' ? 'BATE VOLTA' : 'PADRÃO (2 ETAPAS)' }}</span>
         </div>
       </div>
 
@@ -56,14 +56,12 @@
           alt="QR Code da Ordem"
           class="qr-code-img border pa-1 bg-white"
         />
-        <v-chip
-          size="x-small"
-          class="mt-1 font-weight-bold text-uppercase"
-          :color="delivery.status === 'CONCLUIDO' ? 'success' : 'warning'"
-          variant="flat"
+        <div
+          class="status-badge mt-2"
+          :class="delivery.status === 'CONCLUIDO' ? 'status-concluido' : 'status-pendente'"
         >
           {{ delivery.status === 'CONCLUIDO' ? 'CONCLUÍDO / BAIXADO' : 'PENDENTE DE RETIRADA' }}
-        </v-chip>
+        </div>
       </div>
 
       <!-- Rodapé Obrigatório -->
@@ -188,12 +186,40 @@ const shareWhatsApp = () => {
   background-color: #ffffff;
   border: 2px solid #000000;
   color: #000000;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
+  box-sizing: border-box;
 }
 
 .ticket-header {
   border: 1px solid #000000;
   background-color: #f1f3f5;
+}
+
+.ticket-body {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.ticket-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  width: 100%;
+}
+
+.label-col {
+  flex-shrink: 0;
+  width: 115px;
+  font-weight: bold;
+}
+
+.value-col {
+  flex: 1;
+  text-align: right;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 .border-dashed-bottom {
@@ -211,7 +237,31 @@ const shareWhatsApp = () => {
 }
 
 .font-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+/* Badge nativo compatível com renderização do html2canvas */
+.status-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  font-size: 9.5px;
+  font-weight: 800;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.status-pendente {
+  background-color: #ffc107;
+  color: #000000;
+  border: 1px solid #e0a800;
+}
+
+.status-concluido {
+  background-color: #28a745;
+  color: #ffffff;
+  border: 1px solid #1e7e34;
 }
 </style>
 

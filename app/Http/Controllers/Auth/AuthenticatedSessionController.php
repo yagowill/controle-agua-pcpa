@@ -14,18 +14,18 @@ use Inertia\Response;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Exibe a tela de login institucional do SCEA/PCPA.
      */
     public function create(): Response
     {
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
-            'status' => session('status'),
+            'status'           => session('status'),
         ]);
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Processa o login e redireciona para o painel principal do SCEA.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
@@ -33,11 +33,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Redireciona para o painel principal após autenticação bem-sucedida
+        return redirect()->intended(route('entregas.nova', absolute: false));
     }
 
     /**
-     * Destroy an authenticated session.
+     * Encerra a sessão do usuário de forma segura e redireciona para o login.
      */
     public function destroy(Request $request): RedirectResponse
     {
@@ -47,6 +48,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('login');
     }
 }

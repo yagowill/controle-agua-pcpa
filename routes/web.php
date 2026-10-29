@@ -4,13 +4,13 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WaterDeliveryController;
 use Illuminate\Support\Facades\Route;
 
-// Redireciona a raiz para a tela principal do SCEA
+// Redireciona a raiz para o login (se não autenticado, o middleware redireciona automaticamente)
 Route::get('/', function () {
     return redirect()->route('entregas.nova');
 });
 
-// Rotas do SCEA (Controle de Entrega de Água - Almoxarifado PCPA)
-Route::prefix('entregas')->name('entregas.')->group(function () {
+// Rotas do SCEA protegidas por autenticação obrigatória
+Route::middleware('auth')->prefix('entregas')->name('entregas.')->group(function () {
     // Nova Entrega
     Route::get('/nova', [WaterDeliveryController::class, 'index'])->name('nova');
     Route::post('/', [WaterDeliveryController::class, 'store'])->name('store');
@@ -30,4 +30,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

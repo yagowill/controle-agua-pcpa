@@ -2,8 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Evita que Tailwind preflight resete propriedades críticas do Vuetify */
+/* Evita que Tailwind preflight / @tailwindcss/forms resetem propriedades internas do Vuetify */
+.v-application input,
+.v-application textarea,
+.v-application select {
+  border-width: 0 !important;
+  border-color: transparent !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+.v-application input:focus,
+.v-application textarea:focus,
+.v-application select:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-shadow: none !important;
+}
+
+.v-application .v-field__input {
+  box-shadow: none !important;
+}
+
 .v-application,
 .v-application * {
   box-sizing: border-box;
+}
+
+.v-footer {
+  max-height: fit-content;
 }

@@ -20,6 +20,30 @@ O Sistema de Controle de Entrega de Água tem como finalidade digitalizar a rece
 
 ## 3. Fluxos de Negócio & Histórias de Usuário
 
+### US00 — Autenticação e Gestão de Usuários
+* **Como:** Servidor da PCPA / Atendente / Administrador.
+* **Quero:** Realizar login com credenciais funcionais e permitir o cadastro controlado de novos usuários.
+* **Para:** Garantir autenticidade, auditoria e rastreabilidade nas operações de recebimento e entrega de garrafões.
+
+#### Critérios de Aceitação:
+1. **Cadastro de Usuário (`Register`):**
+   * Campos obrigatórios: Nome completo (`name`), Matrícula/E-mail funcional (`email`), Cargo/Função (`role`: `atendente` ou `admin`), Setor/Lotação (`sector`), Senha (`password`) com confirmação.
+   * Validação de complexidade de senha mínima (8 caracteres) e unicidade de matrícula/e-mail.
+   * Novos cadastros podem ter status ativo imediato ou aprovação por Administrador conforme política interna.
+   * Apenas usuários com perfil `admin` têm acesso à listagem e gerenciamento de permissões de outros usuários.
+2. **Login no Sistema (`Login`):**
+   * Autenticação via e-mail/matrícula funcional e senha.
+   * Opção de "Lembrar-me" (`remember_me`) via cookies seguros de sessão Laravel.
+   * Proteção contra ataques de força bruta (rate limiting com `throttle`).
+   * Redirecionamento automático pós-login para o painel principal (`/dashboard` ou `/entregas`).
+3. **Logout e Segurança de Sessão (`Logout`):**
+   * Encerramento explícito de sessão invalidando tokens e cookies (`session()->invalidate()`, `regenerateToken()`).
+   * Redirecionamento para a tela de login.
+4. **Auditoria e Vínculo Automático:**
+   * O usuário autenticado é identificado automaticamente nas operações, vinculando seu ID e nome aos registros de atendimento (`reception_attendant`, `delivery_attendant`).
+
+---
+
 ### US01 — Lançamento no Fluxo Padrão (2 Etapas)
 * **Como:** Atendente do Almoxarifado.
 * **Quero:** Registrar a entrega de garrafões secos por parte de um setor.
@@ -28,11 +52,11 @@ O Sistema de Controle de Entrega de Água tem como finalidade digitalizar a rece
 #### Critérios de Aceitação:
 1. O sistema deve gerar automaticamente um código sequencial no formato `PCPA-YYYY-XXXX` (ex: `PCPA-2026-0001`).
 2. O sistema deve calcular automaticamente a **data estimada de entrega** com base no dia do lançamento:
-   * Lançamento na Segunda-feira a a Quarta-feira ➔ Previsão para Quinta-feira da mesma semana.
-   * Lançamento na Sexta, Sábado ou Domingo ➔ Previsão para a próxima Quinta-feira.
-   * Se o proximo dia de lançamento for um feriado ou ponto fativo (no estado do pará) ➔ Previsão para o proximo dia útil. 
+   * Lançamento na Segunda-feira a Quarta-feira ➔ Previsão para Quinta-feira da mesma semana.
+   * Lançamento na Quinta a Domingo ➔ Previsão para a próxima Segunda-feira.
+   * O botão da data estimada de entrega deve ser enditável caso o próximo dia seja um feriado. 
 3. O registro é salvo com o status **`DISPONIVEL`**.
-4. O sistema gera a visualização do card de protocolo impresso com opção de **Download em PNG** e **Envio via WhatsApp**.
+4. O sistema gera a visualização do card de protocolo em um modal impresso com opção de **Download em PNG** e **Envio via WhatsApp**.
 
 ---
 
@@ -101,6 +125,22 @@ O Sistema de Controle de Entrega de Água tem como finalidade digitalizar a rece
 
 ---
 
-## 5. Interface & Experiência de Usuário (UI/UX)
+## 5. Modelo de Dados de Usuários (Tabela: `users`)
+
+| Campo | Tipo | Nulo? | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | BigInteger (PK) | Não | Identificador único do usuário. |
+| `name` | String | Não | Nome completo do servidor/colaborador. |
+| `email` | String | Não | E-mail funcional / identificador de login (Unique). |
+| `password` | String | Não | Hash seguro da senha (bcrypt/argon2id). |
+| `role` | Enum | Não | Perfil de acesso: `admin` ou `atendente`. Default: `atendente`. |
+| `sector` | String | Sim | Setor/Lotação do usuário na PCPA. |
+| `is_active` | Boolean | Não | Situação da conta (ativo/inativo). Default: `true`. |
+| `remember_token` | String | Sim | Token para manutenção de sessão "lembrar-me". |
+| `created_at` / `updated_at` | Timestamp | Não | Auditoria de criação e alteração do registro. |
+
+---
+
+## 6. Interface & Experiência de Usuário (UI/UX)
 * **Tema Institucional:** Aderente ao padrão visual dos sistemas internos da PCPA (Top Bar Grafite `#212529`, Botões em Azul `#2b6cb0` e Cards Vuetify `#f8f9fa`).
 * **Responsividade:** Interface otimizada para uso em celulares e computadores da bancada do Almoxarifado.

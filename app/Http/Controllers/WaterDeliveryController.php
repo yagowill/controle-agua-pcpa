@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\WaterDelivery;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class WaterDeliveryController extends Controller
@@ -51,27 +52,30 @@ class WaterDeliveryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'operation_type' => 'required|in:PADRAO,BATE_VOLTA',
-            'sector' => 'required|string|max:255',
-            'empty_bottles_count' => 'required|integer|min:1|max:500',
+            'operation_type'       => 'required|in:PADRAO,BATE_VOLTA',
+            'sector'               => 'required|string|max:255',
+            'empty_bottles_count'  => 'required|integer|min:1|max:500',
             'received_from_person' => 'required|string|max:255',
-            'reception_attendant' => 'required|string|max:255',
-            'notes' => 'nullable|string|max:500',
-            'estimated_date' => 'nullable|date',
-            'delivered_to_person' => 'nullable|string|max:255',
+            'notes'                => 'nullable|string|max:500',
+            'estimated_date'       => 'nullable|date',
+            'delivered_to_person'  => 'nullable|string|max:255',
         ], [
-            'sector.required' => 'O campo setor / delegacia é obrigatório.',
-            'empty_bottles_count.required' => 'Informe a quantidade de garrafões.',
-            'empty_bottles_count.min' => 'A quantidade mínima é de 1 garrafão.',
+            'sector.required'               => 'O campo setor / delegacia é obrigatório.',
+            'empty_bottles_count.required'  => 'Informe a quantidade de garrafões.',
+            'empty_bottles_count.min'       => 'A quantidade mínima é de 1 garrafão.',
             'received_from_person.required' => 'Informe o nome do servidor que entregou o seco.',
-            'reception_attendant.required' => 'Informe o nome do atendente do almoxarifado.',
-            'operation_type.required' => 'Selecione o tipo de operação.',
+            'operation_type.required'       => 'Selecione o tipo de operação.',
         ], [
-            'sector' => 'setor',
-            'empty_bottles_count' => 'quantidade de garrafões',
+            'sector'               => 'setor',
+            'empty_bottles_count'  => 'quantidade de garrafões',
             'received_from_person' => 'servidor',
-            'reception_attendant' => 'atendente',
         ]);
+
+        // Atendente preenchido automaticamente pelo usuário autenticado (auditoria)
+        $attendantName = mb_strtoupper(Auth::user()->name, 'UTF-8');
+
+        // Atendente preenchido automaticamente pelo usuário autenticado (auditoria)
+        $attendantName = mb_strtoupper(Auth::user()->name, 'UTF-8');
 
         $isBateVolta = $validated['operation_type'] === 'BATE_VOLTA';
         $now = Carbon::now();
@@ -102,14 +106,14 @@ class WaterDeliveryController extends Controller
             'reception_date' => $now,
             'estimated_date' => $estimatedDate,
             'received_from_person' => mb_strtoupper($validated['received_from_person'], 'UTF-8'),
-            'reception_attendant' => mb_strtoupper($validated['reception_attendant'], 'UTF-8'),
-            'delivery_date' => $isBateVolta ? $now : null,
-            'delivered_to_person' => $isBateVolta 
-                ? mb_strtoupper($validated['delivered_to_person'] ?? $validated['received_from_person'], 'UTF-8') 
+            'reception_attendant'  => $attendantName,
+            'delivery_date'        => $isBateVolta ? $now : null,
+            'delivered_to_person'  => $isBateVolta
+                ? mb_strtoupper($validated['delivered_to_person'] ?? $validated['received_from_person'], 'UTF-8')
                 : null,
-            'delivery_attendant' => $isBateVolta ? mb_strtoupper($validated['reception_attendant'], 'UTF-8') : null,
+            'delivery_attendant'   => $isBateVolta ? $attendantName : null,
             'status' => $isBateVolta ? 'CONCLUIDO' : 'DISPONIVEL',
-            'notes' => $validated['notes'] ? mb_strtoupper($validated['notes'], 'UTF-8') : null,
+            'notes' => !empty($validated['notes']) ? mb_strtoupper($validated['notes'], 'UTF-8') : null,
         ]);
 
         return redirect()->route('entregas.nova')->with([
@@ -157,13 +161,8 @@ class WaterDeliveryController extends Controller
     {
         $validated = $request->validate([
             'delivered_to_person' => 'required|string|max:255',
-            'delivery_attendant' => 'required|string|max:255',
         ], [
             'delivered_to_person.required' => 'Informe o nome do servidor que está retirando o cheio.',
-            'delivery_attendant.required' => 'Informe o nome do atendente responsável pela entrega.',
-        ], [
-            'delivered_to_person' => 'servidor recebedor',
-            'delivery_attendant' => 'atendente',
         ]);
 
         $delivery = WaterDelivery::where('order_number', $orderNumber)->first();
@@ -174,21 +173,24 @@ class WaterDeliveryController extends Controller
 
         // Validação Estrita Anti-Reuso
         if ($delivery->status === 'CONCLUIDO') {
-            $formattedDate = $delivery->delivery_date 
-                ? $delivery->delivery_date->format('d/m/Y \à\s H:i') 
+            $formattedDate = $delivery->delivery_date
+                ? $delivery->delivery_date->format('d/m/Y \à\s H:i')
                 : 'data não registrada';
 
             return back()->withErrors([
-                'message' => "ATENÇÃO: Este comprovante já foi baixado em {$formattedDate} pelo atendente " . 
+                'message' => "ATENÇÃO: Este comprovante já foi baixado em {$formattedDate} pelo atendente " .
                              ($delivery->delivery_attendant ?? 'NÃO INFORMADO') . "."
             ]);
         }
 
+        // Atendente da baixa preenchido pelo usuário autenticado (auditoria)
+        $attendantName = mb_strtoupper(Auth::user()->name, 'UTF-8');
+
         $delivery->update([
-            'delivery_date' => Carbon::now(),
+            'delivery_date'       => Carbon::now(),
             'delivered_to_person' => mb_strtoupper($validated['delivered_to_person'], 'UTF-8'),
-            'delivery_attendant' => mb_strtoupper($validated['delivery_attendant'], 'UTF-8'),
-            'status' => 'CONCLUIDO',
+            'delivery_attendant'  => $attendantName,
+            'status'              => 'CONCLUIDO',
         ]);
 
         return back()->with('success', "Baixa da ordem {$delivery->order_number} realizada com sucesso!");

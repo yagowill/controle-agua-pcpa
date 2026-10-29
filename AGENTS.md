@@ -1,51 +1,3 @@
-<laravel-boost-guidelines>
-# Laravel Application
-
-This repository contains a Laravel application. Complete the following setup before working on the user's request.
-
-## Prerequisites
-
-Verify that PHP and Composer are available:
-
-```sh
-php -v
-composer -V
-```
-
-If either command is unavailable, detect the user's operating system and install the prerequisites with the appropriate command:
-
-macOS:
-
-```sh
-/bin/bash -c "$(curl -fsSL https://php.new/install/mac/8.5)"
-```
-
-Windows PowerShell:
-
-```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://php.new/install/windows/8.5'))
-```
-
-Linux:
-
-```sh
-/bin/bash -c "$(curl -fsSL https://php.new/install/linux/8.5)"
-```
-
-After installation, ask the user to restart their terminal. If the agent needs the restarted shell to continue, ask the user to reopen their terminal and rerun their original prompt.
-
-## Agent Setup
-
-Install Laravel Boost from the application root before making application changes:
-
-```sh
-composer require laravel/boost --dev
-php artisan boost:install
-```
-
-Boost replaces these bootstrap instructions with guidelines tailored to the application. After installation, read `AGENTS.md` again and continue with the user's original request using the generated guidelines.
-</laravel-boost-guidelines>
-
 # 🤖 AGENTS.md — SCEA Sistema Controle de Entrega de Água (PCPA)
 
 Este ficheiro contém as diretrizes técnicas, regras de negócio e padrões arquiteturais que **devem ser rigorosamente seguidos** por agentes de IA e desenvolvedores ao analisar, refatorar ou gerar código para este repositório.
@@ -65,14 +17,14 @@ Este ficheiro contém as diretrizes técnicas, regras de negócio e padrões arq
 | :--- | :--- | :--- |
 | **Backend** | PHP 8.2+ / Laravel 11 | Utilizar Controllers, Migrations, Eloquent ORM e Form Requests. |
 | **Bridge** | Inertia.js | Arquitetura de Monólito Moderno (SPA sem API REST separada). |
-| **Frontend** | Vue.js 3 (Composition API) | Utilizar `<script setup>` e reacção nativa. |
-| **UI Kit** | Vuetify 3 | Usar componentes Vuetify (`v-card`, `v-btn`, `v-form`, `v-data-table`) com o tema institucional. |
+| **Frontend** | Vue.js 3 (Composition API) e Tailwind css | Utilizar `<script setup>` e reacção nativa. |
+| **UI Kit** | Vuetify 3 | Usar componentes Vuetify (`v-card`, `v-btn`, `v-form`, `v-data-table`) |
 | **Banco de Dados** | MySQL (Local) / PostgreSQL (Prod) | Nomes de colunas e tabelas sempre em inglês e snake_case. |
 | **Versionamento** | Git / GitHub | Padrão *Conventional Commits* em inglês (ex: `feat:`, `fix:`). |
 
 ---
 
-## 🎨 3. Padrão de Identidade Visual (SRH / PCPA)
+## 🎨 3. Padrão de Identidade Visual (PCPA)
 
 Qualquer alteração na interface do utilizador deve respeitar a paleta oficial configurada no Vuetify:
 
@@ -95,6 +47,12 @@ Qualquer alteração na interface do utilizador deve respeitar a paleta oficial 
 
 3. **Formato do Código da Ordem:**
    * O código da ordem deve seguir estritamente o padrão `PCPA-YYYY-XXXX` (ex: `PCPA-2026-0001`).
+
+4. **Controle de Acesso e Autenticação:**
+   * Rotas de operações e relatórios devem ser protegidas por middleware de autenticação (`auth`).
+   * Usuários com perfil `admin` possuem acesso total (inclusive relatórios analíticos e controle de usuários).
+   * Usuários com perfil `atendente` possuem acesso restrito aos fluxos de recebimento, baixa e consulta operacional.
+   * Ao cadastrar e autenticar usuários, utilizar hashing seguro (`Hash::make`) e rate limiting nas tentativas de login.
 
 ---
 
@@ -121,18 +79,27 @@ Ao programar neste projeto, siga **obrigatoriamente** as seguintes convenções:
 ```text
 ├── app/
 │   ├── Http/Controllers/
+│   │   ├── Auth/                         # Controladores de Login e Cadastro
+│   │   │   ├── AuthenticatedSessionController.php
+│   │   │   └── RegisteredUserController.php
 │   │   └── WaterDeliveryController.php   # Lógica principal de lançamentos e baixas
 │   └── Models/
+│       ├── User.php                      # Model de Usuário com perfis e escopos
 │       └── WaterDelivery.php             # Eloquent Model da entrega
 ├── database/
 │   └── migrations/
-│       └── xxxx_create_water_deliveries_table.php  # Schema relacional
+│       ├── xxxx_create_users_table.php            # Schema de usuários (com role e setor)
+│       └── xxxx_create_water_deliveries_table.php  # Schema relacional de entregas
 ├── resources/
 │   ├── js/
 │   │   ├── app.js                       # Configuração do Vue 3 + Vuetify 3
 │   │   └── Pages/                        # Páginas Inertia.js em Vue
+│   │       ├── Auth/
+│   │       │   ├── Login.vue             # Tela de login institucional PCPA
+│   │       │   └── Register.vue          # Tela de cadastro de usuários
 │   │       ├── NovaEntrega.vue
 │   │       ├── BaixarEntrega.vue
 │   │       └── Relatorios.vue
 └── routes/
-    └── web.php                          # Rotas protegidas da aplicação
+    ├── auth.php                         # Rotas de login, registro e logout
+    └── web.php                          # Rotas protegidas da aplicação (middleware auth)

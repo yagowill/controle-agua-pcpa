@@ -272,5 +272,39 @@ const printReport = () => {
 .font-mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
+
+/* Estilos de Impressão/Exportação PDF do Relatório SCEA/PCPA */
+@media print {
+  /* Oculta elementos de navegação e controles ao imprimir */
+  .v-app-bar,
+  .v-footer,
+  .nav-tabs-wrapper,
+  .header-branding,
+  .no-print,
+  .v-btn,
+  .v-pagination,
+  .v-select,
+  .v-text-field {
+    display: none !important;
+  }
+
+  /* Exibe cabeçalho institucional na impressão */
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #2b6cb0;
+  }
+
+  /* Garante que a tabela caiba na página */
+  .v-data-table {
+    font-size: 11px !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}
 </style>
 

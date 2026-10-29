@@ -174,15 +174,19 @@
               ></v-text-field>
             </v-col>
 
+            <!-- Atendente preenchido automaticamente pelo usuário logado -->
             <v-col cols="12" sm="6">
               <v-text-field
                 v-model="redeemForm.delivery_attendant"
-                label="Atendente do Almoxarifado (Entregando)*"
+                label="Atendente do Almoxarifado (Entregando)"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-badge-account"
                 :error-messages="redeemForm.errors.delivery_attendant"
-                required
+                readonly
+                hint="Preenchido automaticamente pelo servidor logado"
+                persistent-hint
+                bg-color="grey-lighten-4"
               ></v-text-field>
             </v-col>
           </v-row>
@@ -205,11 +209,16 @@
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { ref, computed, onBeforeUnmount } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import AppLayout from '@/Layouts/AppLayout.vue';
+
+const page = usePage();
+
+// Nome do atendente autenticado para preenchimento automático (auditoria)
+const loggedUserName = computed(() => page.props.auth?.user?.name ?? '');
 
 const searchQuery = ref('');
 const searching = ref(false);
@@ -219,7 +228,8 @@ let scannerInstance = null;
 
 const redeemForm = useForm({
   delivered_to_person: '',
-  delivery_attendant: '',
+  // Campo preenchido automaticamente pelo atendente logado (auditoria)
+  delivery_attendant: loggedUserName.value,
 });
 
 const formatDateTime = (dateVal) => {
@@ -253,12 +263,16 @@ const searchProtocol = async () => {
 const confirmRedemption = () => {
   if (!selectedDelivery.value) return;
 
+  // Garante que o atendente está preenchido com o usuário autenticado antes de submeter
+  redeemForm.delivery_attendant = loggedUserName.value;
+
   redeemForm.post(route('entregas.redeem', { orderNumber: selectedDelivery.value.order_number }), {
     preserveScroll: true,
     onSuccess: () => {
       searchQuery.value = '';
       selectedDelivery.value = null;
       redeemForm.reset();
+      redeemForm.delivery_attendant = loggedUserName.value;
     },
   });
 };

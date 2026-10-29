@@ -11,10 +11,19 @@
 
       <v-spacer></v-spacer>
 
-      <div class="d-flex align-center ga-3">
-        <div class="text-caption text-grey-lighten-2 d-none d-md-flex align-center">
-          <v-icon icon="mdi-account-circle" size="small" class="me-1"></v-icon>
-          Operador Almoxarifado
+      <div class="d-flex align-center ga-2">
+        <!-- Informações do usuário autenticado -->
+        <div v-if="authUser" class="d-none d-md-flex align-center ga-1">
+          <v-icon icon="mdi-account-circle" size="small" color="grey-lighten-2" />
+          <div class="text-caption text-grey-lighten-2">
+            <span class="font-weight-bold">{{ authUser.name }}</span>
+            <v-chip
+              size="x-small"
+              :color="authUser.role === 'admin' ? 'warning' : 'primary'"
+              variant="tonal"
+              class="ms-1 text-uppercase"
+            >{{ authUser.role }}</v-chip>
+          </div>
         </div>
 
         <v-btn
@@ -33,9 +42,7 @@
           size="small"
           color="white"
           prepend-icon="mdi-logout"
-          :href="route('logout')"
-          method="post"
-          as="button"
+          @click="logout"
         >
           Sair
         </v-btn>
@@ -56,7 +63,7 @@
         Polícia Civil do Estado do Pará
       </h1>
       <h2 class="text-subtitle-2 text-sm-subtitle-1 text-grey-darken-1 font-weight-medium mt-1">
-        Controle de Entrega de Água - Almoxarifado Central
+        Controle de Entrega de Água - Almoxarifado
       </h2>
     </div>
 
@@ -109,7 +116,7 @@
     <!-- RODAPÉ INSTITUCIONAL -->
     <v-footer class="bg-white border-t text-center py-4 d-flex flex-column">
       <div class="text-caption text-grey-darken-1">
-        Polícia Civil do Estado do Pará &copy; {{ new Date().getFullYear() }} — Diretoria de Adminitração / Almoxarifado
+        Polícia Civil do Estado do Pará &copy; {{ new Date().getFullYear() }} — Diretoria de Administração / Almoxarifado
       </div>
     </v-footer>
   </v-app>
@@ -117,9 +124,12 @@
 
 <script setup>
 import { computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
+
+// Usuário autenticado atual (disponível via middleware Inertia Share)
+const authUser = computed(() => page.props.auth?.user ?? null);
 
 const currentTab = computed(() => {
   const url = page.url;
@@ -127,6 +137,10 @@ const currentTab = computed(() => {
   if (url.includes('/entregas/relatorios')) return 'relatorios';
   return 'nova';
 });
+
+const logout = () => {
+  router.post(route('logout'));
+};
 </script>
 
 <style scoped>
@@ -136,6 +150,7 @@ const currentTab = computed(() => {
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
+
 
 .max-w-lg {
   max-width: 1080px;

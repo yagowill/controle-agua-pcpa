@@ -102,14 +102,18 @@
                 </v-col>
 
                 <v-col cols="12" sm="6">
+                  <!-- Campo preenchido automaticamente pelo atendente logado (somente leitura) -->
                   <v-text-field
                     v-model="form.reception_attendant"
-                    label="Atendente do Almoxarifado*"
+                    label="Atendente do Almoxarifado"
                     variant="outlined"
                     density="comfortable"
                     prepend-inner-icon="mdi-badge-account"
                     :error-messages="form.errors.reception_attendant"
-                    required
+                    readonly
+                    :hint="loggedUserName ? 'Preenchido automaticamente pelo servidor logado' : ''"
+                    persistent-hint
+                    bg-color="grey-lighten-4"
                   ></v-text-field>
                 </v-col>
               </v-row>
@@ -201,9 +205,14 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ProtocolCard from '@/Components/ProtocolCard.vue';
+
+const page = usePage();
+
+// Nome do atendente autenticado para preenchimento automático (auditoria)
+const loggedUserName = computed(() => page.props.auth?.user?.name ?? '');
 
 const props = defineProps({
   nextOrderNumber: {
@@ -256,11 +265,17 @@ const form = useForm({
   sector: '',
   empty_bottles_count: 1,
   received_from_person: '',
-  reception_attendant: '',
+  // Campo preenchido automaticamente pelo usuário autenticado (não editável pelo operador)
+  reception_attendant: loggedUserName.value,
   estimated_date: props.defaultEstimatedDate,
   delivered_to_person: '',
   notes: '',
 });
+
+// Mantém o atendente sincronizado com o usuário logado sempre que mudar
+watch(loggedUserName, (name) => {
+  form.reception_attendant = name;
+}, { immediate: true });
 
 // Dados refletidos no modal
 const cardDeliveryData = computed(() => {
@@ -286,6 +301,7 @@ const submitDelivery = () => {
       dialogProtocol.value = true;
       form.reset('sector', 'received_from_person', 'notes', 'delivered_to_person');
       form.empty_bottles_count = 1;
+      form.reception_attendant = loggedUserName.value;
     },
   });
 };
