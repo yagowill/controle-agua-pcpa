@@ -10,16 +10,16 @@ primary_region = 'ams'
   dockerfile = 'Dockerfile'
 
 [env]
-  APP_DEBUG = 'false'
   APP_ENV = 'production'
-  APP_URL = 'https://scea-controle-agua-pcpa.fly.dev'
-  CACHE_STORE = 'database'
-  DB_CONNECTION = 'pgsql'
-  FILESYSTEM_DISK = 'local'
+  APP_DEBUG = 'false'
+  APP_URL = 'https://controle-agua-pcpa.fly.dev'
   LOG_CHANNEL = 'stderr'
   LOG_LEVEL = 'info'
-  QUEUE_CONNECTION = 'database'
+  DB_CONNECTION = 'pgsql'
   SESSION_DRIVER = 'database'
+  CACHE_STORE = 'database'
+  QUEUE_CONNECTION = 'database'
+  FILESYSTEM_DISK = 'local'
 
 [http_service]
   internal_port = 8080
@@ -40,4 +40,3 @@ primary_region = 'ams'
   memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
-  memory_mb = 256
