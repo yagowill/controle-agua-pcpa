@@ -1,37 +1,43 @@
-app = "scea-controle-agua-pcpa"
-primary_region = "gru"
+# fly.toml app configuration file generated for controle-agua-pcpa on 2026-10-30T23:18:06Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'controle-agua-pcpa'
+primary_region = 'ams'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  APP_ENV = "production"
-  APP_DEBUG = "false"
-  APP_URL = "https://scea-controle-agua-pcpa.fly.dev"
-  LOG_CHANNEL = "stderr"
-  LOG_LEVEL = "info"
-  DB_CONNECTION = "pgsql"
-  SESSION_DRIVER = "database"
-  CACHE_STORE = "database"
-  QUEUE_CONNECTION = "database"
-  FILESYSTEM_DISK = "local"
+  APP_DEBUG = 'false'
+  APP_ENV = 'production'
+  APP_URL = 'https://scea-controle-agua-pcpa.fly.dev'
+  CACHE_STORE = 'database'
+  DB_CONNECTION = 'pgsql'
+  FILESYSTEM_DISK = 'local'
+  LOG_CHANNEL = 'stderr'
+  LOG_LEVEL = 'info'
+  QUEUE_CONNECTION = 'database'
+  SESSION_DRIVER = 'database'
 
 [http_service]
-  internal_port = 80
+  internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
+  processes = ['app']
 
   [[http_service.checks]]
-    interval = "30s"
-    timeout = "5s"
-    grace_period = "30s"
-    method = "GET"
-    path = "/up"
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '30s'
+    method = 'GET'
+    path = '/up'
 
 [[vm]]
-  memory = "512mb"
-  cpu_kind = "shared"
+  memory = '512mb'
+  cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 256
