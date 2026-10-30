@@ -3,9 +3,10 @@
 @tailwind utilities;
 
 /* Evita que Tailwind preflight / @tailwindcss/forms resetem propriedades internas do Vuetify */
-.v-application input,
-.v-application textarea,
-.v-application select {
+/* (Escopo em .v-field, para funcionar também em diálogos teleportados fora de .v-application) */
+.v-field input,
+.v-field textarea,
+.v-field select {
   border-width: 0 !important;
   border-color: transparent !important;
   background-color: transparent !important;
@@ -13,9 +14,9 @@
   box-shadow: none !important;
 }
 
-.v-application input:focus,
-.v-application textarea:focus,
-.v-application select:focus {
+.v-field input:focus,
+.v-field textarea:focus,
+.v-field select:focus {
   outline: none !important;
   box-shadow: none !important;
   border-color: transparent !important;
@@ -23,7 +24,7 @@
   --tw-ring-shadow: none !important;
 }
 
-.v-application .v-field__input {
+.v-field .v-field__input {
   box-shadow: none !important;
 }
 
@@ -38,83 +39,83 @@
 --------------------------------------------------------------------------- */
 
 /* Contorno padrão dos campos outlined (cinza institucional) */
-.v-application .v-field--variant-outlined .v-field__outline__start,
-.v-application .v-field--variant-outlined .v-field__outline__end,
-.v-application .v-field--variant-outlined .v-field__outline__notch::before,
-.v-application .v-field--variant-outlined .v-field__outline__notch::after {
+.v-field--variant-outlined .v-field__outline__start,
+.v-field--variant-outlined .v-field__outline__end,
+.v-field--variant-outlined .v-field__outline__notch::before,
+.v-field--variant-outlined .v-field__outline__notch::after {
   border-color: #ced4da;
   opacity: 1;
 }
 
-.v-application .v-field--variant-outlined .v-field__outline__start {
+.v-field--variant-outlined .v-field__outline__start {
   border-top-width: 1px;
   border-bottom-width: 1px;
   border-inline-start-width: 1px;
 }
 
-.v-application .v-field--variant-outlined .v-field__outline__end {
+.v-field--variant-outlined .v-field__outline__end {
   border-top-width: 1px;
   border-bottom-width: 1px;
   border-inline-end-width: 1px;
 }
 
-.v-application .v-field--variant-outlined .v-field__outline__notch::before {
+.v-field--variant-outlined .v-field__outline__notch::before {
   border-width: 1px 0 0;
 }
 
-.v-application .v-field--variant-outlined .v-field__outline__notch::after {
+.v-field--variant-outlined .v-field__outline__notch::after {
   border-width: 0 0 1px;
 }
 
 /* Hover: contorno um pouco mais escuro */
-.v-application .v-field--variant-outlined:hover .v-field__outline__start,
-.v-application .v-field--variant-outlined:hover .v-field__outline__end,
-.v-application .v-field--variant-outlined:hover .v-field__outline__notch::before,
-.v-application .v-field--variant-outlined:hover .v-field__outline__notch::after {
+.v-field--variant-outlined:hover .v-field__outline__start,
+.v-field--variant-outlined:hover .v-field__outline__end,
+.v-field--variant-outlined:hover .v-field__outline__notch::before,
+.v-field--variant-outlined:hover .v-field__outline__notch::after {
   border-color: #adb5bd;
 }
 
 /* Foco: contorno azul institucional mais espesso */
-.v-application .v-field--variant-outlined.v-field--focused .v-field__outline__start,
-.v-application .v-field--variant-outlined.v-field--focused .v-field__outline__end,
-.v-application .v-field--variant-outlined.v-field--focused .v-field__outline__notch::before,
-.v-application .v-field--variant-outlined.v-field--focused .v-field__outline__notch::after {
+.v-field--variant-outlined.v-field--focused .v-field__outline__start,
+.v-field--variant-outlined.v-field--focused .v-field__outline__end,
+.v-field--variant-outlined.v-field--focused .v-field__outline__notch::before,
+.v-field--variant-outlined.v-field--focused .v-field__outline__notch::after {
   border-color: rgb(var(--v-theme-primary));
 }
 
-.v-application .v-field--variant-outlined.v-field--focused .v-field__outline__start {
+.v-field--variant-outlined.v-field--focused .v-field__outline__start {
   border-top-width: 2px;
   border-bottom-width: 2px;
   border-inline-start-width: 2px;
 }
 
-.v-application .v-field--variant-outlined.v-field--focused .v-field__outline__end {
+.v-field--variant-outlined.v-field--focused .v-field__outline__end {
   border-top-width: 2px;
   border-bottom-width: 2px;
   border-inline-end-width: 2px;
 }
 
-.v-application .v-field--variant-outlined.v-field--focused .v-field__outline__notch::before {
+.v-field--variant-outlined.v-field--focused .v-field__outline__notch::before {
   border-width: 2px 0 0;
 }
 
-.v-application .v-field--variant-outlined.v-field--focused .v-field__outline__notch::after {
+.v-field--variant-outlined.v-field--focused .v-field__outline__notch::after {
   border-width: 0 0 2px;
 }
 
 /* Erro de validação: contorno vermelho */
-.v-application .v-field--variant-outlined.v-field--error:not(.v-field--disabled) .v-field__outline__start,
-.v-application .v-field--variant-outlined.v-field--error:not(.v-field--disabled) .v-field__outline__end,
-.v-application .v-field--variant-outlined.v-field--error:not(.v-field--disabled) .v-field__outline__notch::before,
-.v-application .v-field--variant-outlined.v-field--error:not(.v-field--disabled) .v-field__outline__notch::after {
+.v-field--variant-outlined.v-field--error:not(.v-field--disabled) .v-field__outline__start,
+.v-field--variant-outlined.v-field--error:not(.v-field--disabled) .v-field__outline__end,
+.v-field--variant-outlined.v-field--error:not(.v-field--disabled) .v-field__outline__notch::before,
+.v-field--variant-outlined.v-field--error:not(.v-field--disabled) .v-field__outline__notch::after {
   border-color: rgb(var(--v-theme-error));
 }
 
 /* Campos desabilitados/readonly: contorno mais claro */
-.v-application .v-field--variant-outlined.v-field--disabled .v-field__outline__start,
-.v-application .v-field--variant-outlined.v-field--disabled .v-field__outline__end,
-.v-application .v-field--variant-outlined.v-field--disabled .v-field__outline__notch::before,
-.v-application .v-field--variant-outlined.v-field--disabled .v-field__outline__notch::after {
+.v-field--variant-outlined.v-field--disabled .v-field__outline__start,
+.v-field--variant-outlined.v-field--disabled .v-field__outline__end,
+.v-field--variant-outlined.v-field--disabled .v-field__outline__notch::before,
+.v-field--variant-outlined.v-field--disabled .v-field__outline__notch::after {
   border-color: #e9ecef;
 }
 
@@ -126,7 +127,7 @@
    etc.) e deixando os botões brancos. "revert-layer" devolve exatamente o
    valor definido pelas camadas do Vuetify.
 --------------------------------------------------------------------------- */
-.v-application .v-btn {
+.v-btn {
   background-color: revert-layer;
   color: revert-layer;
 }
@@ -158,25 +159,25 @@
 }
 
 /* Campos somente leitura (ex.: atendente logado) com texto destacado */
-.v-application .field-readonly input {
+.field-readonly input {
   font-weight: 700;
 }
 
 /* Cantos levemente arredondados nos campos contornados */
-.v-application .v-field--variant-outlined {
+.v-field--variant-outlined {
   border-radius: 8px;
 }
 
 /* Variantes "filled" e "underlined": linha inferior visível como contorno */
-.v-application .v-field--variant-filled .v-field__outline::before,
-.v-application .v-field--variant-underlined .v-field__outline::before {
+.v-field--variant-filled .v-field__outline::before,
+.v-field--variant-underlined .v-field__outline::before {
   border-bottom-width: 1px;
   border-bottom-color: #ced4da;
   opacity: 1;
 }
 
-.v-application .v-field--variant-filled.v-field--focused .v-field__outline::before,
-.v-application .v-field--variant-underlined.v-field--focused .v-field__outline::before {
+.v-field--variant-filled.v-field--focused .v-field__outline::before,
+.v-field--variant-underlined.v-field--focused .v-field__outline::before {
   border-bottom-color: rgb(var(--v-theme-primary));
 }
 
