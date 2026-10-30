@@ -19,10 +19,12 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# DocumentRoot aponta para /public
+# DocumentRoot aponta para /public e porta 8080 (padrão Fly.io)
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+    && sed -ri 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
+    && sed -ri 's/Listen 80\b/Listen 8080/' /etc/apache2/ports.conf \
+    && sed -ri 's/:80>/:8080>/' /etc/apache2/sites-available/*.conf
 
 # Otimizações do PHP para produção
 RUN { \
@@ -52,7 +54,7 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-EXPOSE 80
+EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["apache2-foreground"]
