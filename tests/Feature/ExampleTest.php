@@ -14,6 +14,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        // A raiz do SCEA redireciona para o painel principal (que exige autenticação)
+        $response->assertRedirect(route('entregas.nova'));
     }
 }

@@ -15,20 +15,25 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         // Verifica se já existe para evitar duplicatas
-        if (User::where('email', 'admin@pcpa.gov.br')->exists()) {
+        if (User::where('username', 'yago.martins')->exists()) {
             $this->command->info('Usuário admin já existe. Seeder ignorado.');
+
             return;
         }
 
         User::create([
-            'name'      => 'ADMINISTRADOR SCEA',
-            'email'     => 'admin@pcpa.gov.br',
-            'password'  => Hash::make('Admin@pcpa2026'),
-            'role'      => 'admin',
-            'sector'    => 'ALMOXARIFADO CENTRAL',
+            'name' => 'Yago Martins',
+            'username' => 'yago.martins',
+            'matricula' => null,
+            'email' => null,
+            'password' => Hash::make('Admin@pcpa2026'),
+            'role' => 'admin',
+            'sector' => 'ALMOXARIFADO CENTRAL',
             'is_active' => true,
+            // Por segurança, exige a troca da senha padrão no primeiro acesso
+            'must_change_password' => true,
         ]);
 
-        $this->command->info('Usuário admin criado: admin@pcpa.gov.br / Admin@pcpa2026');
+        $this->command->info('Usuário admin criado: yago.martins / Admin@pcpa2026 (troca de senha obrigatória no primeiro acesso)');
     }
 }

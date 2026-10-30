@@ -67,9 +67,14 @@
         <!-- BUSCA MANUAL POR NÚMERO DE ORDEM -->
         <v-row dense class="align-center">
           <v-col cols="12" sm="9">
+            <label for="order-search" class="field-label">
+              Número de Ordem / Protocolo <span class="field-label__required">*</span>
+            </label>
+
             <v-text-field
+              id="order-search"
               v-model="searchQuery"
-              label="Número de Ordem / Protocolo*"
+              placeholder="Ex: PCPA-2026-0001"
               variant="outlined"
               density="comfortable"
               prepend-inner-icon="mdi-pound"
@@ -163,22 +168,33 @@
         >
           <v-row dense>
             <v-col cols="12" sm="6">
+              <label for="delivered-to-person" class="field-label">
+                Nome do Servidor (Retirando o Cheio) <span class="field-label__required">*</span>
+              </label>
+
               <v-text-field
+                id="delivered-to-person"
                 v-model="redeemForm.delivered_to_person"
-                label="Nome do Servidor (Retirando o Cheio)*"
+                placeholder="Nome completo ou matrícula"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-account-check"
                 :error-messages="redeemForm.errors.delivered_to_person"
+                hide-details="auto"
                 required
               ></v-text-field>
             </v-col>
 
             <!-- Atendente preenchido automaticamente pelo usuário logado -->
             <v-col cols="12" sm="6">
+              <label for="delivery-attendant" class="field-label">
+                Atendente do Almoxarifado (Entregando)
+              </label>
+
               <v-text-field
+                id="delivery-attendant"
                 v-model="redeemForm.delivery_attendant"
-                label="Atendente do Almoxarifado (Entregando)"
+                placeholder="Preenchido automaticamente"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-badge-account"
@@ -187,6 +203,7 @@
                 hint="Preenchido automaticamente pelo servidor logado"
                 persistent-hint
                 bg-color="grey-lighten-4"
+                class="field-readonly"
               ></v-text-field>
             </v-col>
           </v-row>

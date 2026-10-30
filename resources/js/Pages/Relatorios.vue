@@ -70,15 +70,15 @@
           </span>
 
           <div class="d-flex flex-wrap align-center ga-2">
-            <!-- Filtro Status -->
+            <!-- Filtro Status (o texto selecionado já identifica o filtro) -->
             <v-select
               v-model="filterStatus"
               :items="statusOptions"
-              label="Status"
+              prepend-inner-icon="mdi-filter-variant"
               density="compact"
               variant="outlined"
               hide-details
-              style="width: 140px;"
+              style="width: 190px;"
               @update:model-value="applyFilters"
             ></v-select>
 

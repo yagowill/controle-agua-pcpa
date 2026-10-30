@@ -32,57 +32,103 @@
           <!-- Formulário -->
           <v-card-text class="pa-4 pa-sm-6">
             <v-form @submit.prevent="submitDelivery">
-              <!-- Tipo de Operação -->
+              <!-- Tipo de Operação (cartões selecionáveis) -->
               <div class="mb-4">
-                <label class="text-caption font-weight-bold text-grey-darken-3 d-block mb-1">
-                  Tipo de Operação*
+                <label class="field-label">
+                  Tipo de Operação <span class="field-label__required">*</span>
                 </label>
-                <v-radio-group
-                  v-model="form.operation_type"
-                  inline
-                  hide-details
-                  class="mt-0"
+
+                <div
+                  class="d-flex flex-column flex-sm-row ga-3"
+                  role="radiogroup"
+                  aria-label="Tipo de Operação"
                 >
-                  <v-radio
-                    label="Fluxo Padrão (Deixa seco / Retira depois)"
-                    value="PADRAO"
-                    color="primary"
-                  ></v-radio>
-                  <v-radio
-                    label="Bate Volta (Troca Imediata)"
-                    value="BATE_VOLTA"
-                    color="success"
-                  ></v-radio>
-                </v-radio-group>
+                  <!-- Opção: Fluxo Padrão (azul) -->
+                  <div
+                    class="operation-option operation-option--primary flex-grow-1"
+                    :class="{ 'operation-option--active': form.operation_type === 'PADRAO' }"
+                    role="radio"
+                    :aria-checked="form.operation_type === 'PADRAO'"
+                    tabindex="0"
+                    @click="form.operation_type = 'PADRAO'"
+                    @keydown.enter.prevent="form.operation_type = 'PADRAO'"
+                    @keydown.space.prevent="form.operation_type = 'PADRAO'"
+                  >
+                    <div class="operation-icon">
+                      <v-icon icon="mdi-water-outline" size="24" />
+                    </div>
+
+                    <div class="operation-body">
+                      <div class="operation-title">Fluxo Padrão</div>
+                      <div class="operation-subtitle">Deixa garrafão seco / Retira cheio depois</div>
+                    </div>
+
+                    <span class="operation-badge">NORMAL</span>
+                  </div>
+
+                  <!-- Opção: Bate Volta (verde) -->
+                  <div
+                    class="operation-option operation-option--success flex-grow-1"
+                    :class="{ 'operation-option--active': form.operation_type === 'BATE_VOLTA' }"
+                    role="radio"
+                    :aria-checked="form.operation_type === 'BATE_VOLTA'"
+                    tabindex="0"
+                    @click="form.operation_type = 'BATE_VOLTA'"
+                    @keydown.enter.prevent="form.operation_type = 'BATE_VOLTA'"
+                    @keydown.space.prevent="form.operation_type = 'BATE_VOLTA'"
+                  >
+                    <div class="operation-icon">
+                      <v-icon icon="mdi-swap-horizontal" size="24" />
+                    </div>
+
+                    <div class="operation-body">
+                      <div class="operation-title">Bate Volta</div>
+                      <div class="operation-subtitle">Troca imediata por garrafão abastecido</div>
+                    </div>
+
+                    <span class="operation-badge">IMEDIATO</span>
+                  </div>
+                </div>
               </div>
 
               <!-- Setor e Quantidade -->
               <v-row dense>
                 <v-col cols="12" sm="8">
+                  <label for="sector" class="field-label">
+                    Setor / Lotação / Delegacia <span class="field-label__required">*</span>
+                  </label>
+
                   <v-combobox
+                    id="sector"
                     v-model="form.sector"
                     :items="defaultSectors"
-                    label="Setor / Lotação / Delegacia*"
+                    placeholder="Selecione a unidade policial ou setor..."
+                    persistent-placeholder
                     variant="outlined"
                     density="comfortable"
                     prepend-inner-icon="mdi-office-building"
                     :error-messages="form.errors.sector"
-                    required
+                    hide-details="auto"
                   ></v-combobox>
                 </v-col>
 
                 <v-col cols="12" sm="4">
+                  <label for="empty-bottles" class="field-label">
+                    Qtd. Garrafões <span class="field-label__required">*</span>
+                  </label>
+
                   <v-text-field
+                    id="empty-bottles"
                     v-model.number="form.empty_bottles_count"
-                    label="Qtd. Garrafões*"
                     type="number"
                     min="1"
                     max="100"
+                    placeholder="1"
                     variant="outlined"
                     density="comfortable"
                     prepend-inner-icon="mdi-water"
                     :error-messages="form.errors.empty_bottles_count"
-                    required
+                    hide-details="auto"
                   ></v-text-field>
                 </v-col>
               </v-row>
@@ -90,63 +136,79 @@
               <!-- Servidor que Entregou e Atendente -->
               <v-row dense>
                 <v-col cols="12" sm="6">
+                  <label for="received-from-person" class="field-label">
+                    Servidor que Entregou o Seco <span class="field-label__required">*</span>
+                  </label>
+
                   <v-text-field
+                    id="received-from-person"
                     v-model="form.received_from_person"
-                    label="Servidor que Entregou o Seco*"
+                    placeholder="Nome completo ou Matrícula"
                     variant="outlined"
                     density="comfortable"
                     prepend-inner-icon="mdi-account"
                     :error-messages="form.errors.received_from_person"
-                    required
+                    hide-details="auto"
                   ></v-text-field>
                 </v-col>
 
                 <v-col cols="12" sm="6">
                   <!-- Campo preenchido automaticamente pelo atendente logado (somente leitura) -->
+                  <label for="reception-attendant" class="field-label">
+                    Atendente do Almoxarifado
+                  </label>
+
                   <v-text-field
+                    id="reception-attendant"
                     v-model="form.reception_attendant"
-                    label="Atendente do Almoxarifado"
                     variant="outlined"
                     density="comfortable"
                     prepend-inner-icon="mdi-badge-account"
                     :error-messages="form.errors.reception_attendant"
                     readonly
+                    class="field-readonly"
                     :hint="loggedUserName ? 'Preenchido automaticamente pelo servidor logado' : ''"
                     persistent-hint
                     bg-color="grey-lighten-4"
-                  ></v-text-field>
+                  >
+                    <template v-if="loggedUserName" #append-inner>
+                      <v-chip size="x-small" color="success" variant="tonal" class="font-weight-bold">
+                        Logado
+                      </v-chip>
+                    </template>
+                  </v-text-field>
                 </v-col>
               </v-row>
 
-              <!-- Campos extras no Bate Volta -->
+              <!-- Aviso do Bate Volta: o cheio é entregue ao mesmo servidor que trouxe o seco -->
               <v-fade-transition>
-                <v-card
+                <v-alert
                   v-if="form.operation_type === 'BATE_VOLTA'"
+                  type="success"
                   variant="tonal"
-                  color="success"
-                  class="pa-3 mb-3 border rounded"
+                  density="compact"
+                  class="mb-3"
                 >
-                  <div class="text-caption font-weight-bold mb-2">
-                    <v-icon icon="mdi-information-outline" class="me-1"></v-icon>
+                  <div class="font-weight-bold text-caption mb-1">
                     Troca Imediata (Bate Volta)
                   </div>
-                  <v-text-field
-                    v-model="form.delivered_to_person"
-                    label="Quem está retirando o garrafão cheio?"
-                    variant="outlined"
-                    density="compact"
-                    bg-color="white"
-                    hide-details
-                  ></v-text-field>
-                </v-card>
+                  <span class="text-caption">
+                    O garrafão cheio será entregue ao mesmo servidor que trouxe o seco:
+                    <strong>{{ form.received_from_person || 'informe o servidor acima' }}</strong>.
+                  </span>
+                </v-alert>
               </v-fade-transition>
 
               <!-- Data Prevista e Observações -->
               <v-row dense>
                 <v-col v-if="form.operation_type === 'PADRAO'" cols="12" sm="6">
+                  <label for="estimated-date" class="field-label">
+                    Previsão de Retirada
+                  </label>
+
                   <v-text-field
+                    id="estimated-date"
                     v-model="form.estimated_date"
-                    label="Previsão de Retirada"
                     type="date"
                     variant="outlined"
                     density="comfortable"
@@ -157,13 +219,18 @@
                 </v-col>
 
                 <v-col cols="12" :sm="form.operation_type === 'PADRAO' ? 6 : 12">
+                  <label for="notes" class="field-label">
+                    Observações <span class="field-label__optional">(Opcional)</span>
+                  </label>
+
                   <v-text-field
+                    id="notes"
                     v-model="form.notes"
-                    label="Observações (Opcional)"
+                    placeholder="Ex: Garrafão com lacre avariado, etc."
                     variant="outlined"
                     density="comfortable"
                     prepend-inner-icon="mdi-note-text-outline"
-                    hide-details
+                    hide-details="auto"
                   ></v-text-field>
                 </v-col>
               </v-row>
@@ -262,13 +329,13 @@ const defaultSectors = [
 
 const form = useForm({
   operation_type: 'PADRAO',
-  sector: '',
+  // Inicia nulo para que o placeholder do combobox seja exibido
+  sector: null,
   empty_bottles_count: 1,
   received_from_person: '',
   // Campo preenchido automaticamente pelo usuário autenticado (não editável pelo operador)
   reception_attendant: loggedUserName.value,
   estimated_date: props.defaultEstimatedDate,
-  delivered_to_person: '',
   notes: '',
 });
 
@@ -299,10 +366,115 @@ const submitDelivery = () => {
     preserveScroll: true,
     onSuccess: () => {
       dialogProtocol.value = true;
-      form.reset('sector', 'received_from_person', 'notes', 'delivered_to_person');
+      form.reset('sector', 'received_from_person', 'notes');
       form.empty_bottles_count = 1;
       form.reception_attendant = loggedUserName.value;
     },
   });
 };
 </script>
+
+<style scoped>
+/* Cartões de seleção do Tipo de Operação */
+.operation-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 82px;
+  padding: 12px 14px;
+  border: 2px solid #ced4da;
+  border-radius: 12px;
+  background-color: #ffffff;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.operation-option:hover {
+  border-color: #adb5bd;
+}
+
+.operation-option:focus-visible {
+  box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.25);
+}
+
+/* Ícone em bloco */
+.operation-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  border-radius: 10px;
+  background-color: #f1f3f5;
+  color: #6c757d;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Textos */
+.operation-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.operation-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #212529;
+}
+
+.operation-subtitle {
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: #6c757d;
+  margin-top: 2px;
+}
+
+/* Selo à direita */
+.operation-badge {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background-color: #f1f3f5;
+  color: #495057;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Estado ativo — Fluxo Padrão (azul institucional) */
+.operation-option--primary.operation-option--active {
+  border-color: #2b6cb0;
+  background-color: #f0f7ff;
+}
+
+.operation-option--primary.operation-option--active .operation-icon {
+  background-color: #2b6cb0;
+  color: #ffffff;
+}
+
+.operation-option--primary.operation-option--active .operation-badge {
+  background-color: #dbeafe;
+  color: #2b6cb0;
+}
+
+/* Estado ativo — Bate Volta (verde) */
+.operation-option--success.operation-option--active {
+  border-color: #28a745;
+  background-color: #f1fbf4;
+}
+
+.operation-option--success.operation-option--active .operation-icon {
+  background-color: #28a745;
+  color: #ffffff;
+}
+
+.operation-option--success.operation-option--active .operation-badge {
+  background-color: #d1fae5;
+  color: #1b7a43;
+}
+</style>

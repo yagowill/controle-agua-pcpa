@@ -17,17 +17,33 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_users_can_authenticate_using_username(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'username' => 'joao.silva',
+        ]);
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'username' => 'joao.silva',
             'password' => 'password',
         ]);
 
-        $this->assertAuthenticated();
+        $this->assertAuthenticatedAs($user);
         $response->assertRedirect(route('entregas.nova', absolute: false));
+    }
+
+    public function test_username_is_case_insensitive_on_login(): void
+    {
+        $user = User::factory()->create([
+            'username' => 'maria.souza',
+        ]);
+
+        $this->post('/login', [
+            'username' => 'MARIA.SOUZA',
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
@@ -35,11 +51,37 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $this->post('/login', [
-            'email' => $user->email,
+            'username' => $user->username,
             'password' => 'wrong-password',
         ]);
 
         $this->assertGuest();
+    }
+
+    public function test_inactive_users_can_not_authenticate(): void
+    {
+        $user = User::factory()->create(['is_active' => false]);
+
+        $response = $this->post('/login', [
+            'username' => $user->username,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors('username');
+    }
+
+    public function test_users_with_temporary_password_are_redirected_to_password_change(): void
+    {
+        $user = User::factory()->mustChangePassword()->create();
+
+        $response = $this->post('/login', [
+            'username' => $user->username,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $response->assertRedirect(route('password.force'));
     }
 
     public function test_users_can_logout(): void

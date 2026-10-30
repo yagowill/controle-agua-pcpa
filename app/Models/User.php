@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'sector', 'is_active'])]
+#[Fillable(['name', 'username', 'matricula', 'email', 'password', 'role', 'sector', 'is_active', 'must_change_password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -25,8 +25,9 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_active'         => 'boolean',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 
@@ -44,5 +45,21 @@ class User extends Authenticatable
     public function isAttendant(): bool
     {
         return $this->role === 'atendente';
+    }
+
+    /**
+     * Verifica se a conta está ativa (pode autenticar no sistema).
+     */
+    public function isActive(): bool
+    {
+        return (bool) $this->is_active;
+    }
+
+    /**
+     * Indica que o usuário precisa definir uma nova senha antes de usar o sistema.
+     */
+    public function mustChangePassword(): bool
+    {
+        return (bool) $this->must_change_password;
     }
 }

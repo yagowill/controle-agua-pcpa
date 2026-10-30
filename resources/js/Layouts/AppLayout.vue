@@ -41,6 +41,17 @@
           variant="text"
           size="small"
           color="white"
+          prepend-icon="mdi-lock-reset"
+          :href="route('password.force')"
+        >
+          Alterar Senha
+        </v-btn>
+
+        <v-btn
+          v-if="$page.props.auth?.user"
+          variant="text"
+          size="small"
+          color="white"
           prepend-icon="mdi-logout"
           @click="logout"
         >
@@ -102,6 +113,17 @@
             <v-icon icon="mdi-chart-box-outline" class="me-2"></v-icon>
             Histórico e Relatórios
           </v-tab>
+
+          <!-- Aba exclusiva do administrador: gestão de usuários -->
+          <v-tab
+            v-if="isAdmin"
+            :value="'usuarios'"
+            :href="route('admin.users.index')"
+            class="text-body-2 font-weight-bold text-none px-4"
+          >
+            <v-icon icon="mdi-account-cog-outline" class="me-2"></v-icon>
+            Usuários
+          </v-tab>
         </v-tabs>
       </v-container>
     </div>
@@ -131,8 +153,12 @@ const page = usePage();
 // Usuário autenticado atual (disponível via middleware Inertia Share)
 const authUser = computed(() => page.props.auth?.user ?? null);
 
+// Apenas administradores visualizam a gestão de usuários
+const isAdmin = computed(() => authUser.value?.role === 'admin');
+
 const currentTab = computed(() => {
   const url = page.url;
+  if (url.includes('/admin/usuarios')) return 'usuarios';
   if (url.includes('/entregas/baixa')) return 'baixa';
   if (url.includes('/entregas/relatorios')) return 'relatorios';
   return 'nova';

@@ -28,7 +28,7 @@
             Acesso ao Sistema
           </v-card-title>
 
-          <!-- Mensagem de status (ex: senha redefinida) -->
+          <!-- Mensagem de status (ex: senha redefinida/alterada) -->
           <v-alert
             v-if="status"
             type="success"
@@ -41,24 +41,35 @@
 
           <v-card-text class="pa-5">
             <v-form @submit.prevent="submit">
-              <!-- E-mail -->
+              <!-- Nome de Usuário -->
+              <label for="username" class="field-label">
+                Nome de Usuário <span class="field-label__required">*</span>
+              </label>
+
               <v-text-field
-                v-model="form.email"
-                label="E-mail Institucional"
-                type="email"
+                id="username"
+                v-model="form.username"
+                placeholder="Digite o seu nome de usuário"
+                type="text"
                 variant="outlined"
                 density="comfortable"
-                prepend-inner-icon="mdi-email-outline"
-                :error-messages="form.errors.email"
+                prepend-inner-icon="mdi-account-outline"
+                :error-messages="form.errors.username"
                 autofocus
                 autocomplete="username"
-                class="mb-3"
+                hide-details="auto"
+                class="mb-4"
               />
 
               <!-- Senha -->
+              <label for="password" class="field-label">
+                Senha <span class="field-label__required">*</span>
+              </label>
+
               <v-text-field
+                id="password"
                 v-model="form.password"
-                label="Senha"
+                placeholder="Digite a sua senha"
                 :type="showPassword ? 'text' : 'password'"
                 variant="outlined"
                 density="comfortable"
@@ -67,11 +78,12 @@
                 @click:append-inner="showPassword = !showPassword"
                 :error-messages="form.errors.password"
                 autocomplete="current-password"
-                class="mb-3"
+                hide-details="auto"
+                class="mb-2"
               />
 
-              <!-- Lembrar-me e Esqueci a senha -->
-              <div class="d-flex align-center justify-space-between mb-5">
+              <!-- Lembrar-me -->
+              <div class="d-flex align-center mb-5">
                 <v-checkbox
                   v-model="form.remember"
                   label="Lembrar-me"
@@ -79,13 +91,6 @@
                   hide-details
                   color="primary"
                 />
-                <Link
-                  v-if="canResetPassword"
-                  :href="route('password.request')"
-                  class="text-caption text-primary text-decoration-none"
-                >
-                  Esqueceu a senha?
-                </Link>
               </div>
 
               <!-- Botão de Entrar -->
@@ -105,15 +110,15 @@
 
           <v-divider />
 
-          <!-- Link para cadastro -->
+          <!-- Aviso institucional: cadastro e reset de senha são feitos pelo administrador -->
           <v-card-text class="text-center py-3">
-            <span class="text-caption text-grey-darken-1">Não tem acesso?</span>
-            <Link
-              :href="route('register')"
-              class="text-caption text-primary font-weight-bold text-decoration-none ms-1"
-            >
-              Solicitar Cadastro
-            </Link>
+            <div class="text-caption text-grey-darken-1 d-flex align-center justify-center ga-1">
+              <v-icon icon="mdi-information-outline" size="x-small" />
+              Esqueceu a senha? Solicite o reset ao administrador do SCEA.
+            </div>
+            <div class="text-caption text-grey-darken-1 mt-1">
+              O cadastro de novos usuários é realizado exclusivamente pelo administrador.
+            </div>
           </v-card-text>
         </v-card>
       </v-container>
@@ -123,15 +128,14 @@
 
 <script setup>
 import { ref } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 
 defineProps({
-  canResetPassword: { type: Boolean },
   status: { type: String },
 });
 
 const form = useForm({
-  email: '',
+  username: '',
   password: '',
   remember: false,
 });

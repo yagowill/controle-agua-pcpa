@@ -58,7 +58,6 @@ class WaterDeliveryController extends Controller
             'received_from_person' => 'required|string|max:255',
             'notes'                => 'nullable|string|max:500',
             'estimated_date'       => 'nullable|date',
-            'delivered_to_person'  => 'nullable|string|max:255',
         ], [
             'sector.required'               => 'O campo setor / delegacia é obrigatório.',
             'empty_bottles_count.required'  => 'Informe a quantidade de garrafões.',
@@ -108,8 +107,9 @@ class WaterDeliveryController extends Controller
             'received_from_person' => mb_strtoupper($validated['received_from_person'], 'UTF-8'),
             'reception_attendant'  => $attendantName,
             'delivery_date'        => $isBateVolta ? $now : null,
+            // No Bate Volta a mesma pessoa que entregou o seco retira o garrafão cheio
             'delivered_to_person'  => $isBateVolta
-                ? mb_strtoupper($validated['delivered_to_person'] ?? $validated['received_from_person'], 'UTF-8')
+                ? mb_strtoupper($validated['received_from_person'], 'UTF-8')
                 : null,
             'delivery_attendant'   => $isBateVolta ? $attendantName : null,
             'status' => $isBateVolta ? 'CONCLUIDO' : 'DISPONIVEL',

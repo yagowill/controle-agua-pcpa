@@ -26,11 +26,38 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
+            'matricula' => (string) fake()->unique()->numberBetween(100000, 999999),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => 'atendente',
+            'sector' => 'ALMOXARIFADO CENTRAL',
+            'is_active' => true,
+            // Por padrão a fábrica cria contas já liberadas (sem troca obrigatória)
+            'must_change_password' => false,
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /**
+     * Usuário com perfil de administrador.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+        ]);
+    }
+
+    /**
+     * Usuário que precisa definir uma nova senha no próximo acesso.
+     */
+    public function mustChangePassword(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'must_change_password' => true,
+        ]);
     }
 
     /**

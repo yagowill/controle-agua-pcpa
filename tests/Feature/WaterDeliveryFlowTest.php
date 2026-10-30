@@ -62,7 +62,6 @@ class WaterDeliveryFlowTest extends TestCase
             'sector' => 'DELEGACIA GERAL (DG)',
             'empty_bottles_count' => 2,
             'received_from_person' => 'PEDRO INVESTIGADOR',
-            'delivered_to_person' => 'PEDRO INVESTIGADOR',
         ]);
 
         $response->assertRedirect(route('entregas.nova'));
@@ -70,6 +69,8 @@ class WaterDeliveryFlowTest extends TestCase
             'operation_type' => 'BATE_VOLTA',
             'sector' => 'DELEGACIA GERAL (DG)',
             'status' => 'CONCLUIDO',
+            // No Bate Volta quem trouxe o seco é quem leva o cheio
+            'delivered_to_person' => 'PEDRO INVESTIGADOR',
             'reception_attendant' => 'CARLOS ATENDENTE',
             'delivery_attendant' => 'CARLOS ATENDENTE',
         ]);
@@ -104,4 +105,3 @@ class WaterDeliveryFlowTest extends TestCase
         $this->assertEquals('MARCOS', $delivery->delivered_to_person);
     }
 }
-
