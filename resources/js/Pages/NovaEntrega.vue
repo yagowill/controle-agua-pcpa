@@ -95,14 +95,14 @@
               <v-row dense>
                 <v-col cols="12" sm="8">
                   <label for="sector" class="field-label">
-                    Setor / Lotação / Delegacia <span class="field-label__required">*</span>
+                    Setor / Delegacia <span class="field-label__required">*</span>
                   </label>
 
                   <v-combobox
                     id="sector"
                     v-model="form.sector"
                     :items="defaultSectors"
-                    placeholder="Selecione a unidade policial ou setor..."
+                    placeholder="Selecione a unidade policial ou setor"
                     persistent-placeholder
                     variant="outlined"
                     density="comfortable"
@@ -155,7 +155,7 @@
                 <v-col cols="12" sm="6">
                   <!-- Campo preenchido automaticamente pelo atendente logado (somente leitura) -->
                   <label for="reception-attendant" class="field-label">
-                    Atendente do Almoxarifado
+                    Atendimento
                   </label>
 
                   <v-text-field
@@ -226,7 +226,7 @@
                   <v-text-field
                     id="notes"
                     v-model="form.notes"
-                    placeholder="Ex: Garrafão com lacre avariado, etc."
+                    placeholder="Ex: Garrafão avariado, etc."
                     variant="outlined"
                     density="comfortable"
                     prepend-inner-icon="mdi-note-text-outline"
@@ -314,17 +314,33 @@ watch(
 );
 
 const defaultSectors = [
-  'METROPOLITANO',
-  'DELEGACIA GERAL (DG)',
-  'NOP (NÚCLEO DE OPERAÇÕES)',
-  'DIP (DIVISÃO DE INTELIGÊNCIA POLICIAL)',
+  'GABINETE DO DELEGADO-GERAL (DG)',
+  'GABINETE DA DIRETORIA DE ADMINISTRAÇÃO (DA)',
+  'ALMOXARIFADO',
+  'PATRIMÔNIO',
+  'SETOR DE CONTRATOS',
+  'SETOR DE LICITAÇÕES',
+  'DIVISÃO DE RECURSOS MATERIAIS (DRM)',
+  'CONSULTORIA JURIDICA (CONJUR)',
+  'CONTROLE INTERNO (CI)',
+  'DIRETORIA DE INFORMÁTICA MANUTENÇÃO E ESTATISTICA (DIME)',
+  'DIME - REDES',
+  'DIME - DESENVOLVIMENTO',
+  'DIME - ESTATÍSTICA (DIVEST)',
+  'DIME - MANUTENÇÃO',
+  'DIME - SECRETARIA',
+  'MANUTENÇÃO PREDIAL',
+  'ENGENNHARIA E ARQUITETURA',
+  'COPA (DA)',
+  'CORREDOR DE BAIXO',
+  'PREFEIURA',
+  'NIP (NÚCLEO DE INTELIGÊNCIA POLICIAL)',
+  'NIP - CYBER LAB',
   'SECCIONAL DE SÃO BRÁS',
   'SECCIONAL DA PEDREIRA',
   'SECCIONAL DO COMÉRCIO',
   'SECCIONAL DA MARAMBAIA',
-  'SECCIONAL DA CIDADE NOVA',
-  'ALMOXARIFADO CENTRAL',
-  'DIRETORIA DE RECURSOS MATERIAIS',
+  'SECCIONAL DA CIDADE NOVA'
 ];
 
 const form = useForm({

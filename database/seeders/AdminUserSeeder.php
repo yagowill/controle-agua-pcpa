@@ -28,7 +28,7 @@ class AdminUserSeeder extends Seeder
             'email' => null,
             'password' => Hash::make('Admin@pcpa2026'),
             'role' => 'admin',
-            'sector' => 'ALMOXARIFADO CENTRAL',
+            'sector' => 'ALMOXARIFADO',
             'is_active' => true,
             // Por segurança, exige a troca da senha padrão no primeiro acesso
             'must_change_password' => true,

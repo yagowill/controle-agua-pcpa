@@ -49,6 +49,7 @@
               :color="isCameraActive ? 'error' : 'primary'"
               variant="elevated"
               size="small"
+              class="p-3"
               :prepend-icon="isCameraActive ? 'mdi-camera-off' : 'mdi-camera'"
               @click="toggleCamera"
             >
@@ -74,10 +75,10 @@
             <v-text-field
               id="order-search"
               v-model="searchQuery"
-              placeholder="Ex: PCPA-2026-0001"
+              placeholder=" Ex: PCPA-2026-0001 ou 0001"
               variant="outlined"
               density="comfortable"
-              prepend-inner-icon="mdi-pound"
+              prepend-inner-icon="mdi-text-search-variant"
               class="font-mono"
               hide-details
               @keyup.enter="searchProtocol"
@@ -88,7 +89,8 @@
               color="primary"
               size="large"
               block
-              prepend-icon="mdi-magnifying-glass"
+              class="p-3 mt-5"
+              prepend-icon="mdi-magnify"
               :loading="searching"
               @click="searchProtocol"
             >

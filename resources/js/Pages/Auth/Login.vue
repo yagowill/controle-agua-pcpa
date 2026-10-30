@@ -23,7 +23,7 @@
 
         <!-- Card de Login -->
         <v-card class="elevation-2 border rounded-lg" color="surface">
-          <v-card-title class="bg-grey-lighten-4 py-3 px-5 border-b text-subtitle-2 font-weight-bold text-secondary d-flex align-center ga-2">
+          <v-card-title class="bg-grey-lighten-4 py-3 justify-center px-5 border-b text-subtitle-2 font-weight-bold text-secondary d-flex align-center ga-2">
             <v-icon icon="mdi-lock-outline" size="small" />
             Acesso ao Sistema
           </v-card-title>
@@ -113,11 +113,7 @@
           <!-- Aviso institucional: cadastro e reset de senha são feitos pelo administrador -->
           <v-card-text class="text-center py-3">
             <div class="text-caption text-grey-darken-1 d-flex align-center justify-center ga-1">
-              <v-icon icon="mdi-information-outline" size="x-small" />
-              Esqueceu a senha? Solicite o reset ao administrador do SCEA.
-            </div>
-            <div class="text-caption text-grey-darken-1 mt-1">
-              O cadastro de novos usuários é realizado exclusivamente pelo administrador.
+              O cadastro de novos usuários e reset de senha é realizado exclusivamente pelo administrador.
             </div>
           </v-card-text>
         </v-card>

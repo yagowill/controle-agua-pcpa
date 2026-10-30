@@ -37,7 +37,7 @@
               placeholder="Buscar nome, usuário, matrícula..."
               density="compact"
               variant="outlined"
-              prepend-inner-icon="mdi-magnifying-glass"
+              prepend-inner-icon="mdi-magnify"
               hide-details
               clearable
               style="width: 260px;"
@@ -48,7 +48,8 @@
             <v-btn
               color="primary"
               variant="elevated"
-              size="small"
+              size="medium"
+              class="py-1 px-3"
               prepend-icon="mdi-account-plus"
               @click="openCreateDialog"
             >
@@ -187,7 +188,7 @@
                 <v-text-field
                   id="create-name"
                   v-model="createForm.name"
-                  placeholder="Nome completo do servidor"
+                  placeholder="Nome Sobrenome"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-account-outline"
@@ -225,7 +226,7 @@
                 <v-text-field
                   id="create-matricula"
                   v-model="createForm.matricula"
-                  placeholder="Matrícula funcional"
+                  placeholder="Matrícula"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-card-account-details-outline"
@@ -336,6 +337,7 @@
                 type="submit"
                 color="primary"
                 variant="elevated"
+                class="px-4"
                 prepend-icon="mdi-content-save"
                 :loading="createForm.processing"
               >
@@ -475,17 +477,8 @@ const roleOptions = [
 ];
 
 const defaultSectors = [
-  'ALMOXARIFADO CENTRAL',
-  'METROPOLITANO',
-  'DELEGACIA GERAL (DG)',
-  'NOP (NÚCLEO DE OPERAÇÕES)',
-  'DIP (DIVISÃO DE INTELIGÊNCIA POLICIAL)',
-  'SECCIONAL DE SÃO BRÁS',
-  'SECCIONAL DA PEDREIRA',
-  'SECCIONAL DO COMÉRCIO',
-  'SECCIONAL DA MARAMBAIA',
-  'SECCIONAL DA CIDADE NOVA',
-  'DIRETORIA DE RECURSOS MATERIAIS',
+  'ALMOXARIFADO',
+  'PATRIMÔNIO'
 ];
 
 const dialogCreate = ref(false);
