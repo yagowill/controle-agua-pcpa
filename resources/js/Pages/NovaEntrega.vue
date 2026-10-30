@@ -155,7 +155,7 @@
                 <v-col cols="12" sm="6">
                   <!-- Campo preenchido automaticamente pelo atendente logado (somente leitura) -->
                   <label for="reception-attendant" class="field-label">
-                    Atendimento
+                    Atendente do Almoxarifado (Entregando)
                   </label>
 
                   <v-text-field
