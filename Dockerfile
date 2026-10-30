@@ -46,8 +46,9 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 # Compila os assets do frontend
 RUN npm ci --no-audit --no-fund && npm run build && rm -rf node_modules
 
-# Permissões de escrita para storage e cache
-RUN chown -R www-data:www-data storage bootstrap/cache \
+# Garante que os diretórios de runtime do storage existam
+RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs \
+    && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 # Script de inicialização (migrations + cache + apache)
