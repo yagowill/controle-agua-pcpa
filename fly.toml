@@ -1,6 +1,10 @@
-# fly.toml app configuration file
+# fly.toml app configuration file generated for controle-agua-pcpa on 2026-10-30T23:18:06Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
 app = 'controle-agua-pcpa'
-primary_region = 'gru'
+primary_region = 'ams'
 
 [build]
   dockerfile = 'Dockerfile'
