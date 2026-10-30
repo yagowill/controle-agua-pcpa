@@ -5,11 +5,29 @@
 - `flyctl` instalado: https://fly.io/docs/hands-on/install-flyctl/
 - Banco PostgreSQL disponível (Supabase ou Fly Postgres)
 
-## 1. Login e criação do app
+## 1. Via GitHub Actions (recomendado — sem CLI local)
+
+O repositório já contém `.github/workflows/fly-deploy.yml`. Basta:
+
+1. Criar um token em https://fly.io/user/personal_access_tokens (escopo da org `yago-martins-366`).
+2. No GitHub: **Settings → Secrets and variables → Actions → New repository secret**, adicionar:
+   - `FLY_API_TOKEN` — o token criado acima
+   - `APP_KEY` — gere com `php artisan key:generate --show`
+   - `DB_HOST` — host do Postgres (ex.: `db.<projeto>.supabase.co`)
+   - `DB_DATABASE` — nome do banco (ex.: `postgres`)
+   - `DB_USERNAME` — usuário
+   - `DB_PASSWORD` — senha
+3. Fazer push na branch `main`/`master` (ou rodar o workflow manualmente em **Actions → Deploy to Fly.io → Run workflow**).
+
+O workflow cria o app (se não existir), sincroniza os secrets e faz o deploy. O `entrypoint.sh` roda as migrations automaticamente.
+
+## 1b. Via CLI (alternativa)
 ```bash
 fly auth login
-# Ajuste o nome do app em fly.toml se necessário
-fly launch --no-deploy --copy-config --name scea-controle-agua-pcpa
+fly launch --org yago-martins-366 --name scea-controle-agua-pcpa --region gru --no-deploy
+fly secrets set APP_KEY="$(php artisan key:generate --show)" APP_URL="https://scea-controle-agua-pcpa.fly.dev"
+fly secrets set DB_CONNECTION=pgsql DB_HOST=db.<projeto>.supabase.co DB_PORT=5432 DB_DATABASE=postgres DB_USERNAME=postgres DB_PASSWORD="<senha>" DB_SSLMODE=require
+fly deploy
 ```
 
 ## 2. Configurar secrets (obrigatório)
