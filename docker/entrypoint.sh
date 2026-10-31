@@ -13,10 +13,13 @@ if [ -z "${APP_KEY}" ]; then
     php artisan key:generate --force
 fi
 
+# Garante que os diretórios de runtime existam
+mkdir -p storage/framework/{cache,sessions,views} storage/logs
+
 # Otimizações de produção
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan config:cache || true
+php artisan route:cache || true
+php artisan view:cache || true
 php artisan event:cache 2>/dev/null || true
 
 # Executa as migrations automaticamente

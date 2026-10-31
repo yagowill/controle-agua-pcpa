@@ -21,10 +21,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # DocumentRoot aponta para /public e porta 8080 (padrão Fly.io)
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
-    && sed -ri 's/Listen 80\b/Listen 8080/' /etc/apache2/ports.conf \
-    && sed -ri 's/:80>/:8080>/' /etc/apache2/sites-available/*.conf
+# Substitui a configuração padrão do Apache por uma controlada (porta 8080)
+COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
+RUN a2ensite 000-default \
+    && echo "Listen 8080" > /etc/apache2/ports.conf
 
 # Otimizações do PHP para produção
 RUN { \
