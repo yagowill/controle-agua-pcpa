@@ -80,5 +80,5 @@ A interface segue o Padrão Visual Institucional dos Sistemas da Polícia Civil 
 
 1. **Clonar o Repositório:**
    ```bash
-   git clone [https://github.com/SEU-USUARIO/scea-controle-agua-pcpa.git](https://github.com/SEU-USUARIO/scea-controle-agua-pcpa.git)
-   cd scea-controle-agua-pcpa
+   git clone [https://github.com/yagowill/controle-agua-pcpa.git](https://github.com/SEU-USUARIO/controle-agua-pcpa.git)
+   cd controle-agua-pcpa
