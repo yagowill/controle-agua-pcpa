@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚰 SCEA — Sistema de Controle de Entrega de Água
+# Sistema de Controle de Entrega de Água
 
 ![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
 ![Inertia.js](https://img.shields.io/badge/Inertia.js-v1.0-9553E9?style=for-the-badge&logo=inertia&logoColor=white)
@@ -80,5 +80,5 @@ A interface segue o Padrão Visual Institucional dos Sistemas da Polícia Civil 
 
 1. **Clonar o Repositório:**
    ```bash
-   git clone [https://github.com/SEU-USUARIO/scea-controle-agua-pcpa.git](https://github.com/SEU-USUARIO/scea-controle-agua-pcpa.git)
+   git clone [https://github.com/SEU-USUARIO/scea-controle-agua-pcpa.git](https://github.com/SEU-USUARIO/controle-agua-pcpa.git)
    cd scea-controle-agua-pcpa
