@@ -1,13 +1,15 @@
-# 🤖 AGENTS.md — SCEA Sistema Controle de Entrega de Água (PCPA)
+# 🤖 AGENTS.md — SCEA Sistema de Controle de Entrega de Água (PCPA)
 
 Este ficheiro contém as diretrizes técnicas, regras de negócio e padrões arquiteturais que **devem ser rigorosamente seguidos** por agentes de IA e desenvolvedores ao analisar, refatorar ou gerar código para este repositório.
 
 ---
 
 ## 📌 1. Visão Geral do Projeto
+
 * **Nome do Sistema:** SCEA — Sistema de Controle de Entrega de Água
 * **Cliente / Contexto:** Polícia Civil do Estado do Pará (PCPA) — Belém/PA
-* **Objetivo:** Digitalizar o processo de recebimento de garrafões vazios e entrega de garrafões cheios, substituindo talões físicos de papel por comprovantes digitais com QR Code e validação estrita anti-reuso
+* **Objetivo:** Digitalizar o processo de recebimento de garrafões vazios e entrega de garrafões cheios, substituindo talões físicos de papel por comprovantes digitais com QR Code e validação estrita anti-reuso.
+* **Arquitetura:** Monólito moderno (SPA) com Laravel + Inertia.js + Vue 3. Não existe API REST separada.
 
 ---
 
@@ -15,23 +17,67 @@ Este ficheiro contém as diretrizes técnicas, regras de negócio e padrões arq
 
 | Camada | Tecnologia | Detalhes / Regras |
 | :--- | :--- | :--- |
-| **Backend** | PHP 8.2+ / Laravel 11 | Utilizar Controllers, Migrations, Eloquent ORM e Form Requests. |
-| **Bridge** | Inertia.js | Arquitetura de Monólito Moderno (SPA sem API REST separada). |
-| **Frontend** | Vue.js 3 (Composition API) e Tailwind css | Utilizar `<script setup>` e reacção nativa. |
-| **UI Kit** | Vuetify 3 | Usar componentes Vuetify (`v-card`, `v-btn`, `v-form`, `v-data-table`) |
-| **Banco de Dados** | MySQL (Local) / PostgreSQL (Prod) | Nomes de colunas e tabelas sempre em inglês e snake_case. |
-| **Versionamento** | Git / GitHub | Padrão *Conventional Commits* em inglês (ex: `feat:`, `fix:`). |
+| **Backend** | PHP 8.4 / Laravel 13 | Controllers, Form Requests, Migrations, Eloquent ORM e Services. |
+| **Bridge** | Inertia.js 2 | Páginas em `resources/js/Pages`, sem endpoints REST dedicados. |
+| **Frontend** | Vue.js 3 (Composition API) | Utilizar `<script setup>` e reatividade nativa. |
+| **UI Kit** | Vuetify 4 | Componentes `v-card`, `v-btn`, `v-form`, `v-data-table`, etc. |
+| **Estilos** | Tailwind CSS 3 + PostCSS | O Tailwind é usado em conjunto com o Vuetify; não remover as regras de compatibilidade de `resources/css/app.css`. |
+| **Banco de Dados** | PostgreSQL 17 | Desenvolvimento via Docker Compose; produção em PostgreSQL 17. |
+| **Testes** | PHPUnit 12 / SQLite `:memory:` | O ambiente de testes é isolado e nunca usa o PostgreSQL de desenvolvimento. |
+| **PDF** | `dompdf/dompdf` | Relatórios em PDF com gráficos SVG embutidos como data URI. |
+| **Planilhas** | `phpoffice/phpspreadsheet` | Exportação XLSX (resumo, séries, setores e registros). |
+| **Infra local** | Docker + Docker Compose | Serviços `app`, `vite` e `postgres`. |
+| **Produção** | Oracle Cloud Always Free + Docker Compose + Caddy | HTTPS automático via Let's Encrypt. |
+| **Versionamento** | Git / GitHub | Conventional Commits em inglês (ex: `feat:`, `fix:`). |
 
 ---
 
-## 🎨 3. Padrão de Identidade Visual (PCPA)
+## 🏗️ 3. Estrutura Arquitetural
 
-Qualquer alteração na interface do utilizador deve respeitar a paleta oficial configurada no Vuetify:
+```text
+├── app/
+│   ├── Exports/
+│   │   └── DeliveryReportSpreadsheet.php   # Geração do XLSX
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Admin/UserController.php    # Gestão de usuários (admin)
+│   │   │   ├── Auth/                       # Login, logout e troca de senha
+│   │   │   ├── ReportController.php        # Dashboard e exportações
+│   │   │   └── WaterDeliveryController.php # Lançamentos, histórico e baixa
+│   │   ├── Middleware/                     # Admin e troca obrigatória de senha
+│   │   └── Requests/                       # Validação (Form Requests)
+│   ├── Models/
+│   │   ├── User.php
+│   │   └── WaterDelivery.php
+│   ├── Services/
+│   │   └── DeliveryReportService.php       # Agregações e KPIs dos relatórios
+│   └── Support/Charts/SvgChartRenderer.php # Gráficos SVG para o PDF
+├── database/migrations/                    # Schema de usuários e entregas
+├── docker/
+│   ├── php/                                # Dockerfile, PHP.ini, OPcache e entrypoint
+│   └── caddy/Caddyfile                     # Reverse proxy e HTTPS em produção
+├── resources/
+│   ├── css/app.css                         # Tailwind + ajustes do Vuetify
+│   ├── js/
+│   │   ├── app.js                          # Vue 3 + Vuetify + Inertia
+│   │   └── Pages/                          # Páginas Inertia
+│   └── views/reports/dashboard-pdf.blade.php
+├── routes/
+│   ├── auth.php
+│   └── web.php
+├── specs/feature.md                        # Especificação funcional
+├── compose.yaml                            # Ambiente de desenvolvimento
+├── compose.prod.yaml                       # Produção (app + postgres + caddy)
+├── .env.example                            # Variáveis do ambiente local
+└── .env.production.example                 # Variáveis do ambiente de produção
+```
 
-* **Azul Institucional (`primary`):** `#2b6cb0` (Utilizado em botões principais, destaques e acções ativas).
-* **Grafite Escuro (`secondary`):** `#212529` (Utilizado no cabeçalho/Top Bar estilo SRH)
-* **Cinza de Fundo (`background`):** `#f8f9fa` (Fundo geral da aplicação)
-* **Bordas e Superfícies:** Cartões e formulários leves com fundo branco e bordas em `#ced4da`
+### 3.1 Fluxo de requisição
+
+1. A rota é definida em `routes/web.php` e protegida por `auth` e `require.password.change`.
+2. O Controller valida a entrada (Form Request ou `$request->validate()`).
+3. A regra de negócio é executada no Controller ou em `App\Services`.
+4. A resposta Inertia renderiza uma página em `resources/js/Pages`.
 
 ---
 
@@ -49,57 +95,115 @@ Qualquer alteração na interface do utilizador deve respeitar a paleta oficial 
    * O código da ordem deve seguir estritamente o padrão `PCPA-YYYY-XXXX` (ex: `PCPA-2026-0001`).
 
 4. **Controle de Acesso e Autenticação:**
-   * Rotas de operações e relatórios devem ser protegidas por middleware de autenticação (`auth`).
-   * Usuários com perfil `admin` possuem acesso total (inclusive relatórios analíticos e controle de usuários).
-   * Usuários com perfil `atendente` possuem acesso restrito aos fluxos de recebimento, baixa e consulta operacional.
-   * Ao cadastrar e autenticar usuários, utilizar hashing seguro (`Hash::make`) e rate limiting nas tentativas de login.
+   * Rotas de operações e relatórios devem ser protegidas por `auth` e `require.password.change`.
+   * Usuários com perfil `admin` possuem acesso total (relatórios analíticos e gestão de usuários).
+   * Usuários com perfil `atendente` possuem acesso restrito aos fluxos de recebimento, baixa, histórico e consulta operacional.
+   * O login é feito por `username`. `email` e `matricula` são opcionais.
+   * Todo usuário novo nasce com `must_change_password = true` e deve trocar a senha no primeiro acesso.
+   * Utilizar `Hash::make` e rate limiting nas tentativas de login.
+
+5. **Relatórios:**
+   * O consumo considera **apenas ordens com status `CONCLUIDO`**.
+   * Histórico e relatórios são páginas separadas (`/entregas/historico` e `/entregas/relatorios`).
+   * Exportações disponíveis: PDF, XLSX e CSV.
 
 ---
 
-## 💻 5. Convenções de Código para Agentes de IA
+## 🐳 5. Ambiente de Desenvolvimento (Docker)
 
-Ao programar neste projeto, siga **obrigatoriamente** as seguintes convenções:
+### 5.1 Serviços
+
+| Serviço | Imagem | Porta host | Observação |
+| :--- | :--- | :--- | :--- |
+| `app` | build `development` (`php:8.4-apache`) | `8000` | Laravel + Apache |
+| `vite` | `node:22-alpine` | `5173` | HMR do Vue/Tailwind |
+| `postgres` | `postgres:17-alpine` | `5433` | PostgreSQL local |
+
+### 5.2 Comandos essenciais
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan test
+docker compose exec app ./vendor/bin/pint
+docker compose logs -f app
+docker compose down
+```
+
+### 5.3 Regras do ambiente Docker
+
+* O código-fonte é montado via bind mount; `vendor`, `node_modules` e `pgdata` são volumes nomeados.
+* O serviço `app` sobrescreve `DB_HOST=postgres`, `DB_PORT=5432` e as credenciais locais via `environment:` no Compose.
+* O `.env` do host continua válido para comandos executados fora do container (`DB_HOST=127.0.0.1`, `DB_PORT=5433`).
+* O `vite` depende do diretório `vendor` (o `app.js` importa o Ziggy do Composer) e aguarda o Composer terminar.
+* O entrypoint de desenvolvimento instala dependências na primeira execução, gera `APP_KEY` se necessário e aplica migrations.
+* **Não** executar os testes apontando para o PostgreSQL de desenvolvimento. O `phpunit.xml` força `DB_CONNECTION=sqlite` e `DB_DATABASE=:memory:` também em `$_SERVER`, porque o Laravel dá precedência a `$_SERVER` sobre `$_ENV`.
+
+---
+
+## 🚀 6. Produção (Oracle Cloud Always Free + Caddy)
+
+### 6.1 Serviços (`compose.prod.yaml`)
+
+| Serviço | Função |
+| :--- | :--- |
+| `app` | Imagem de produção (assets compilados, `vendor` sem dev, OPcache otimizado) |
+| `postgres` | PostgreSQL 17 sem porta exposta no host |
+| `caddy` | Reverse proxy com HTTPS automático (Let's Encrypt) |
+
+### 6.2 Regras de deploy
+
+* `APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY` obrigatória.
+* `APP_DOMAIN` deve apontar para o domínio público configurado no DNS.
+* `APP_URL` deve usar `https://`.
+* `APP_FORCE_HTTPS=true` e `SESSION_SECURE_COOKIE=true`.
+* Migrations são aplicadas no entrypoint (`php artisan migrate --force`).
+* `config:cache`, `route:cache` e `view:cache` são executados no start.
+* O `postgres` não deve publicar portas no host.
+* Backups do PostgreSQL são responsabilidade da operação (não há backup automático no free tier).
+* O entrypoint respeita a variável `PORT` para compatibilidade com plataformas como Render.
+* Em produção com dados reais, avaliar requisitos de LGPD/SLA institucionais antes de usar free tiers.
+
+---
+
+## 💻 7. Convenções de Código para Agentes de IA
 
 * **Nomenclatura no Código:**
   * Funções, variáveis, métodos, classes, tabelas e colunas **devem ser escritos em inglês** (ex: `WaterDelivery`, `order_number`, `calculateNextDeliveryDate`).
-  * **Comentários de código e documentação:** Devem ser escritos em **português** para servir de documentação aos desenvolvedores e auditores do sistema.
-
+  * **Comentários de código e documentação:** Devem ser escritos em **português**.
+  * Rotas e nomes de páginas podem permanecer em português (`/entregas/nova`, `Relatorios.vue`), pois fazem parte da interface do utilizador.
 * **Padrões Laravel:**
-  * Mantenha validações dentro de `$request->validate()` ou em `FormRequests` dedicados.
-  * Utilize datas tratadas via `Carbon\Carbon`.
-
+  * Validações em `Form Requests` ou `$request->validate()`.
+  * Datas tratadas via `Carbon\Carbon`.
+  * Evitar SQL bruto; usar Eloquent/Query Builder (compatível com PostgreSQL).
+  * Não reintroduzir dependência de MySQL; o banco oficial é PostgreSQL.
 * **Padrões Vue 3 / Vuetify:**
-  * Prefira o estilo `<script setup>` do Vue 3.
-  * Mantenha a estrutura responsiva adaptada a dispositivos móveis e desktops.
+  * Preferir `<script setup>`.
+  * Manter responsividade para celulares e desktops.
+  * Preservar o tema institucional definido em `resources/js/app.js`.
+* **Qualidade:**
+  * Executar `php artisan test` e `./vendor/bin/pint` antes de concluir alterações.
+  * Não alterar `phpunit.xml` para apontar para PostgreSQL.
 
 ---
 
-## 📁 6. Estrutura Direcionada de Arquivos
+## 🎨 8. Padrão de Identidade Visual (PCPA)
 
-```text
-├── app/
-│   ├── Http/Controllers/
-│   │   ├── Auth/                         # Controladores de Login e Cadastro
-│   │   │   ├── AuthenticatedSessionController.php
-│   │   │   └── RegisteredUserController.php
-│   │   └── WaterDeliveryController.php   # Lógica principal de lançamentos e baixas
-│   └── Models/
-│       ├── User.php                      # Model de Usuário com perfis e escopos
-│       └── WaterDelivery.php             # Eloquent Model da entrega
-├── database/
-│   └── migrations/
-│       ├── xxxx_create_users_table.php            # Schema de usuários (com role e setor)
-│       └── xxxx_create_water_deliveries_table.php  # Schema relacional de entregas
-├── resources/
-│   ├── js/
-│   │   ├── app.js                       # Configuração do Vue 3 + Vuetify 3
-│   │   └── Pages/                        # Páginas Inertia.js em Vue
-│   │       ├── Auth/
-│   │       │   ├── Login.vue             # Tela de login institucional PCPA
-│   │       │   └── Register.vue          # Tela de cadastro de usuários
-│   │       ├── NovaEntrega.vue
-│   │       ├── BaixarEntrega.vue
-│   │       └── Relatorios.vue
-└── routes/
-    ├── auth.php                         # Rotas de login, registro e logout
-    └── web.php                          # Rotas protegidas da aplicação (middleware auth)
+* **Azul Institucional (`primary`):** `#2b6cb0` — botões principais, destaques e ações ativas.
+* **Grafite Escuro (`secondary`):** `#212529` — cabeçalho/Top Bar estilo SRH.
+* **Cinza de Fundo (`background`):** `#f8f9fa` — fundo geral da aplicação.
+* **Bordas e Superfícies:** cartões brancos com bordas em `#ced4da`.
+* **Fonte e contraste:** manter legibilidade em ambientes de almoxarifado e em dispositivos móveis.
+
+---
+
+## ✅ 9. Checklist antes de concluir uma alteração
+
+1. A regra anti-reuso continua intacta?
+2. O código da ordem segue `PCPA-YYYY-XXXX`?
+3. As rotas novas estão sob `auth` e `require.password.change`?
+4. O relatório considera apenas `CONCLUIDO`?
+5. `docker compose up -d` e `docker compose exec app php artisan test` passam?
+6. `./vendor/bin/pint --test` passa?
+7. O `README.md` e `specs/feature.md` continuam coerentes com a alteração?
