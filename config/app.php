@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Forçar HTTPS
+    |--------------------------------------------------------------------------
+    |
+    | Quando verdadeiro e APP_ENV=production, todas as URLs geradas pelo
+    | Laravel usam https. Necessário quando o TLS é terminado por um proxy
+    | reverso (Caddy, Render, etc.).
+    |
+    */
+
+    'force_https' => (bool) env('APP_FORCE_HTTPS', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

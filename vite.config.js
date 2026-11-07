@@ -17,4 +17,13 @@ export default defineConfig({
             },
         }),
     ],
+    server: {
+        // Necessário para o HMR funcionar a partir do container Docker.
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: 'localhost',
+        },
+    },
 });

@@ -1,0 +1,98 @@
+# Ambiente de desenvolvimento do SCEA/PCPA.
+#
+# Serviços essenciais:
+#   app      -> Laravel 13 + Apache (http://localhost:8000)
+#   vite     -> Vite com HMR (http://localhost:5173)
+#   postgres -> PostgreSQL 17 (host: 127.0.0.1:5433)
+#
+# O código é montado via bind mount. `vendor` e `node_modules` ficam em volumes
+# nomeados para evitar I/O lento do Docker Desktop no Windows.
+#
+# As credenciais abaixo são exclusivas do ambiente local e não são lidas do .env.
+
+name: scea
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: development
+    image: scea-app:dev
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      LOG_CHANNEL: stderr
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: scea
+      DB_USERNAME: scea
+      DB_PASSWORD: scea
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      MAIL_MAILER: log
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  vite:
+    image: node:22-alpine
+    working_dir: /var/www/html
+    environment:
+      APP_URL: http://localhost:8000
+    command:
+      - sh
+      - -c
+      - |
+        # O app.js importa o Ziggy do vendor; aguarda o Composer terminar.
+        until [ -f vendor/tightenco/ziggy/package.json ]; do
+          echo "[scea] Aguardando o vendor do Composer..."
+          sleep 2
+        done
+
+        if [ ! -d node_modules/vite ]; then
+          npm ci --no-audit --no-fund
+        fi
+
+        npm run dev -- --host 0.0.0.0 --port 5173
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/var/www/html
+      - node_modules:/var/www/html/node_modules
+      - vendor:/var/www/html/vendor:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: scea
+      POSTGRES_USER: scea
+      POSTGRES_PASSWORD: scea
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scea -d scea"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  vendor:
+  node_modules:
+  pgdata:

@@ -1,0 +1,15 @@
+# Reverse proxy do SCEA/PCPA com HTTPS automático (Let's Encrypt).
+# O domínio é definido pela variável APP_DOMAIN em .env.production.
+
+{$APP_DOMAIN} {
+    encode zstd gzip
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    reverse_proxy app:80
+}
