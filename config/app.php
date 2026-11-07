@@ -52,7 +52,12 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    /*
+    | Em plataformas como o Render o domínio público é exposto em
+    | RENDER_EXTERNAL_URL. O fallback evita URLs erradas quando APP_URL
+    | não for definida explicitamente.
+    */
+    'url' => env('APP_URL', env('RENDER_EXTERNAL_URL', 'http://localhost')),
 
     /*
     |--------------------------------------------------------------------------

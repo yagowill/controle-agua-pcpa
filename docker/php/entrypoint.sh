@@ -10,7 +10,9 @@
 # Produção:
 #   - exige APP_KEY definida por variável de ambiente;
 #   - respeita a variável PORT (Render e plataformas semelhantes);
-#   - aplica migrations e otimiza os caches do Laravel.
+#   - aceita DB_URL (Neon, Aiven, Supabase) além de DB_HOST/DB_PORT;
+#   - aplica migrations, roda o seeder quando RUN_SEEDER=true e otimiza os
+#     caches do Laravel.
 #
 # Comentários em português conforme as convenções do projeto.
 
@@ -62,24 +64,60 @@ fi
 # Aguarda o PostgreSQL aceitar conexões
 # ---------------------------------------------------------------------------
 if [ "${DB_CONNECTION:-pgsql}" = "pgsql" ]; then
-    log "Aguardando PostgreSQL em ${DB_HOST:-postgres}:${DB_PORT:-5432}..."
+    if [ -n "${DB_URL:-}" ]; then
+        log "Aguardando PostgreSQL externo (DB_URL)..."
+    else
+        log "Aguardando PostgreSQL em ${DB_HOST:-postgres}:${DB_PORT:-5432}..."
+    fi
+
+    # Tenta por até 60 segundos. Depois disso o entrypoint prossegue e deixa
+    # que o `migrate` mostre o erro real de conexão/credenciais.
+    attempts=0
     until php -r '
+        $url = getenv("DB_URL");
+
         try {
-            new PDO(
-                sprintf(
+            if ($url) {
+                // Banco externo (Neon, Aiven, Supabase...): extrai host, porta,
+                // base e credenciais da própria connection string.
+                $parts = parse_url($url);
+                $dsn = sprintf(
+                    "pgsql:host=%s;port=%s;dbname=%s;sslmode=%s",
+                    $parts["host"] ?? "127.0.0.1",
+                    $parts["port"] ?? 5432,
+                    ltrim($parts["path"] ?? "", "/"),
+                    getenv("DB_SSLMODE") ?: "require"
+                );
+                $user = isset($parts["user"]) ? rawurldecode($parts["user"]) : "";
+                $password = isset($parts["pass"]) ? rawurldecode($parts["pass"]) : "";
+            } else {
+                $dsn = sprintf(
                     "pgsql:host=%s;port=%s;dbname=%s",
                     getenv("DB_HOST") ?: "postgres",
                     getenv("DB_PORT") ?: "5432",
                     getenv("DB_DATABASE") ?: "laravel"
-                ),
-                getenv("DB_USERNAME") ?: "root",
-                getenv("DB_PASSWORD") ?: ""
-            );
+                );
+                $user = getenv("DB_USERNAME") ?: "root";
+                $password = getenv("DB_PASSWORD") ?: "";
+            }
+
+            new PDO($dsn, $user, $password, [
+                PDO::ATTR_TIMEOUT => 5,
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            ]);
+
             exit(0);
         } catch (Throwable $e) {
             exit(1);
         }
     ' 2>/dev/null; do
+        attempts=$((attempts + 1))
+
+        if [ "$attempts" -ge 30 ]; then
+            log "AVISO: PostgreSQL não respondeu em 60s; prosseguindo mesmo assim."
+            break
+        fi
+
         sleep 2
     done
 fi
@@ -89,6 +127,12 @@ fi
 # ---------------------------------------------------------------------------
 log "Aplicando migrations..."
 php artisan migrate --force
+
+# Popula o banco apenas quando explicitamente solicitado (primeiro deploy).
+if [ "${RUN_SEEDER:-false}" = "true" ]; then
+    log "Executando seeders..."
+    php artisan db:seed --force
+fi
 
 mkdir -p \
     storage/framework/cache/data \
