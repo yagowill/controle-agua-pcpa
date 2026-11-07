@@ -20,7 +20,19 @@ class WaterDeliveryFlowTest extends TestCase
         $response = $this->get('/entregas/baixa');
         $response->assertRedirect('/login');
 
+        $response = $this->get('/entregas/historico');
+        $response->assertRedirect('/login');
+
         $response = $this->get('/entregas/relatorios');
+        $response->assertRedirect('/login');
+
+        $response = $this->get('/entregas/relatorios/pdf');
+        $response->assertRedirect('/login');
+
+        $response = $this->get('/entregas/relatorios/xlsx');
+        $response->assertRedirect('/login');
+
+        $response = $this->get('/entregas/relatorios/csv');
         $response->assertRedirect('/login');
     }
 

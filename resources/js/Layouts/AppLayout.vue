@@ -106,12 +106,21 @@
           </v-tab>
 
           <v-tab
+            :value="'historico'"
+            :href="route('entregas.historico')"
+            class="text-body-2 font-weight-bold text-none px-4"
+          >
+            <v-icon icon="mdi-history" class="me-2"></v-icon>
+            Histórico
+          </v-tab>
+
+          <v-tab
             :value="'relatorios'"
             :href="route('entregas.relatorios')"
             class="text-body-2 font-weight-bold text-none px-4"
           >
             <v-icon icon="mdi-chart-box-outline" class="me-2"></v-icon>
-            Histórico e Relatórios
+            Relatórios
           </v-tab>
 
           <!-- Aba exclusiva do administrador: gestão de usuários -->
@@ -161,6 +170,7 @@ const currentTab = computed(() => {
   if (url.includes('/admin/usuarios')) return 'usuarios';
   if (url.includes('/entregas/baixa')) return 'baixa';
   if (url.includes('/entregas/relatorios')) return 'relatorios';
+  if (url.includes('/entregas/historico')) return 'historico';
   return 'nova';
 });
 

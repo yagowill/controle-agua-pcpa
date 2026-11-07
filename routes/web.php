@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\ForcePasswordController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\WaterDeliveryController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,8 +29,14 @@ Route::middleware(['auth', 'require.password.change'])->prefix('entregas')->name
     Route::get('/api/search/{orderNumber}', [WaterDeliveryController::class, 'searchOrder'])->name('api.search');
     Route::post('/redeem/{orderNumber}', [WaterDeliveryController::class, 'redeem'])->name('redeem');
 
-    // Relatórios e Histórico
-    Route::get('/relatorios', [WaterDeliveryController::class, 'relatoriosPage'])->name('relatorios');
+    // Histórico operacional
+    Route::get('/historico', [WaterDeliveryController::class, 'historicoPage'])->name('historico');
+
+    // Dashboard analítico e exportações
+    Route::get('/relatorios', [ReportController::class, 'index'])->name('relatorios');
+    Route::get('/relatorios/pdf', [ReportController::class, 'downloadPdf'])->name('relatorios.pdf');
+    Route::get('/relatorios/xlsx', [ReportController::class, 'downloadXlsx'])->name('relatorios.xlsx');
+    Route::get('/relatorios/csv', [ReportController::class, 'downloadCsv'])->name('relatorios.csv');
 });
 
 Route::middleware(['auth', 'require.password.change'])->group(function () {

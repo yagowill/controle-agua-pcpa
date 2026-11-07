@@ -1,209 +1,392 @@
 <template>
   <AppLayout>
-    <div class="space-y-6">
-      <!-- CARDS DE ESTATÍSTICAS CONSOLIDADAS -->
-      <v-row dense class="mb-4">
-        <v-col cols="12" sm="6" md="3">
-          <v-card class="elevation-1 border rounded pa-3">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-grey-darken-1 font-weight-bold">TOTAL GARRAFÕES</div>
-                <div class="text-h5 font-weight-black text-primary">{{ stats.total_bottles }}</div>
-              </div>
-              <v-avatar color="blue-lighten-4" size="44">
-                <v-icon icon="mdi-water" color="primary" size="large"></v-icon>
-              </v-avatar>
-            </div>
-          </v-card>
-        </v-col>
+    <v-progress-linear
+      v-if="loading"
+      indeterminate
+      color="primary"
+      class="mb-3"
+      rounded
+    ></v-progress-linear>
 
-        <v-col cols="12" sm="6" md="3">
-          <v-card class="elevation-1 border rounded pa-3">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-grey-darken-1 font-weight-bold">TOTAL ORDENS</div>
-                <div class="text-h5 font-weight-black text-secondary">{{ stats.total_deliveries }}</div>
-              </div>
-              <v-avatar color="grey-lighten-3" size="44">
-                <v-icon icon="mdi-file-document-multiple" color="secondary" size="large"></v-icon>
-              </v-avatar>
-            </div>
-          </v-card>
-        </v-col>
+    <!-- FILTROS DO RELATÓRIO -->
+    <v-card class="elevation-1 border rounded mb-4">
+      <v-card-title class="bg-grey-lighten-4 py-3 px-4 border-b d-flex flex-column flex-sm-row justify-space-between align-sm-center ga-2">
+        <span class="text-subtitle-2 font-weight-bold text-secondary">
+          <v-icon icon="mdi-chart-box-outline" class="me-1"></v-icon>
+          Relatórios de Consumo
+        </span>
 
-        <v-col cols="12" sm="6" md="3">
-          <v-card class="elevation-1 border rounded pa-3">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-grey-darken-1 font-weight-bold">PENDENTES</div>
-                <div class="text-h5 font-weight-black text-warning">{{ stats.total_pendentes }}</div>
-              </div>
-              <v-avatar color="amber-lighten-4" size="44">
-                <v-icon icon="mdi-clock-outline" color="warning" size="large"></v-icon>
-              </v-avatar>
-            </div>
-          </v-card>
-        </v-col>
+        <div class="d-flex flex-wrap align-center ga-2">
+          <v-btn
+            color="error"
+            variant="tonal"
+            size="small"
+            prepend-icon="mdi-file-pdf-box"
+            :disabled="loading"
+            @click="downloadReport('pdf')"
+          >
+            PDF
+          </v-btn>
 
-        <v-col cols="12" sm="6" md="3">
-          <v-card class="elevation-1 border rounded pa-3">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-grey-darken-1 font-weight-bold">CONCLUÍDAS</div>
-                <div class="text-h5 font-weight-black text-success">{{ stats.total_concluidas }}</div>
-              </div>
-              <v-avatar color="green-lighten-4" size="44">
-                <v-icon icon="mdi-check-circle" color="success" size="large"></v-icon>
-              </v-avatar>
-            </div>
-          </v-card>
-        </v-col>
-      </v-row>
+          <v-btn
+            color="success"
+            variant="tonal"
+            size="small"
+            prepend-icon="mdi-microsoft-excel"
+            :disabled="loading"
+            @click="downloadReport('xlsx')"
+          >
+            XLSX
+          </v-btn>
 
-      <!-- TABELA DE HISTÓRICO COM FILTROS -->
-      <v-card class="elevation-1 border rounded">
-        <!-- Barra de Filtros -->
-        <v-card-title class="bg-grey-lighten-4 py-3 px-4 border-b d-flex flex-column flex-sm-row justify-space-between align-sm-center ga-3">
-          <span class="text-subtitle-2 font-weight-bold text-secondary">
-            <v-icon icon="mdi-history" class="me-1"></v-icon>
-            Histórico de Registros
-          </span>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            size="small"
+            prepend-icon="mdi-file-delimited-outline"
+            :disabled="loading"
+            @click="downloadReport('csv')"
+          >
+            CSV
+          </v-btn>
+        </div>
+      </v-card-title>
 
-          <div class="d-flex flex-wrap align-center ga-2">
-            <!-- Filtro Status (o texto selecionado já identifica o filtro) -->
+      <v-card-text class="pa-4">
+        <v-row dense align="center">
+          <v-col cols="12" sm="5" md="3">
+            <label class="filter-label">Período</label>
+            <v-btn-toggle
+              v-model="mode"
+              mandatory
+              density="compact"
+              variant="outlined"
+              color="primary"
+              divided
+              class="w-100"
+              @update:model-value="applyFilters"
+            >
+              <v-btn value="annual" class="flex-grow-1 text-none">
+                <v-icon icon="mdi-calendar-year" start size="small"></v-icon>
+                Anual
+              </v-btn>
+              <v-btn value="monthly" class="flex-grow-1 text-none">
+                <v-icon icon="mdi-calendar-month" start size="small"></v-icon>
+                Mensal
+              </v-btn>
+            </v-btn-toggle>
+          </v-col>
+
+          <v-col cols="6" sm="3" md="2">
+            <label class="filter-label">Ano</label>
             <v-select
-              v-model="filterStatus"
-              :items="statusOptions"
-              prepend-inner-icon="mdi-filter-variant"
+              v-model="year"
+              :items="yearOptions"
               density="compact"
               variant="outlined"
               hide-details
-              style="width: 190px;"
+              prepend-inner-icon="mdi-calendar"
               @update:model-value="applyFilters"
             ></v-select>
+          </v-col>
 
-            <!-- Busca Geral -->
-            <v-text-field
-              v-model="searchQuery"
-              placeholder="Buscar setor ou servidor..."
+          <v-col v-if="isMonthly" cols="6" sm="4" md="3">
+            <label class="filter-label">Mês</label>
+            <v-select
+              v-model="month"
+              :items="monthOptions"
               density="compact"
               variant="outlined"
-              prepend-inner-icon="mdi-magnifying-glass"
               hide-details
-              clearable
-              style="width: 220px;"
-              @keyup.enter="applyFilters"
-              @click:clear="clearSearch"
-            ></v-text-field>
+              prepend-inner-icon="mdi-calendar-month-outline"
+              @update:model-value="applyFilters"
+            ></v-select>
+          </v-col>
 
-            <v-btn
-              color="primary"
-              variant="elevated"
-              size="small"
-              icon="mdi-printer"
-              title="Imprimir / Salvar PDF"
-              @click="printReport"
-            ></v-btn>
+          <v-col cols="12" :md="isMonthly ? 4 : 7" class="d-flex align-center justify-sm-end">
+            <div class="text-caption text-grey-darken-1">
+              <v-icon icon="mdi-calendar-range" size="small" class="me-1"></v-icon>
+              {{ report.period.start_label }} a {{ report.period.end_label }}
+            </div>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+
+    <v-alert
+      v-if="report.totals.orders === 0"
+      type="info"
+      variant="tonal"
+      density="compact"
+      class="mb-4"
+    >
+      Nenhuma ordem foi registrada no período selecionado. Os indicadores serão exibidos assim que houver movimentação.
+    </v-alert>
+
+    <!-- INDICADORES CONSOLIDADOS -->
+    <v-row dense class="mb-2">
+      <v-col cols="12" sm="6" md="4">
+        <v-card class="elevation-1 border rounded pa-4 h-100 kpi-card">
+          <div class="d-flex align-center justify-space-between">
+            <div>
+              <div class="kpi-label">GARRAFÕES CONSUMIDOS</div>
+              <div class="text-h4 font-weight-black text-primary">{{ formatNumber(report.totals.bottles) }}</div>
+              <div class="kpi-hint">Somente ordens concluídas</div>
+            </div>
+            <v-avatar color="blue-lighten-4" size="48">
+              <v-icon icon="mdi-water" color="primary" size="large"></v-icon>
+            </v-avatar>
           </div>
-        </v-card-title>
+        </v-card>
+      </v-col>
 
-        <!-- Tabela -->
-        <v-table density="comfortable" hover>
+      <v-col cols="12" sm="6" md="4">
+        <v-card class="elevation-1 border rounded pa-4 h-100 kpi-card">
+          <div class="d-flex align-center justify-space-between">
+            <div>
+              <div class="kpi-label">SETORES ATENDIDOS</div>
+              <div class="text-h4 font-weight-black text-secondary">{{ formatNumber(report.totals.sectors_served) }}</div>
+              <div class="kpi-hint">Setores com consumo concluído</div>
+            </div>
+            <v-avatar color="grey-lighten-3" size="48">
+              <v-icon icon="mdi-office-building" color="secondary" size="large"></v-icon>
+            </v-avatar>
+          </div>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="4">
+        <v-card class="elevation-1 border rounded pa-4 h-100 kpi-card kpi-card--warning">
+          <div class="d-flex align-center justify-space-between ga-2">
+            <div class="min-w-0">
+              <div class="kpi-label">SETOR COM MAIOR CONSUMO</div>
+              <div class="text-subtitle-1 font-weight-black text-truncate" :title="topSectorName">
+                {{ topSectorName }}
+              </div>
+              <div class="kpi-hint">
+                <template v-if="report.totals.top_sector">
+                  {{ formatNumber(report.totals.top_sector.bottles) }} garrafões
+                  ({{ formatDecimal(report.totals.top_sector.percentage) }}%)
+                </template>
+                <template v-else>Sem consumo concluído</template>
+              </div>
+            </div>
+            <v-avatar color="amber-lighten-4" size="48">
+              <v-icon icon="mdi-trophy-outline" color="warning" size="large"></v-icon>
+            </v-avatar>
+          </div>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="3">
+        <v-card class="elevation-1 border rounded pa-4 h-100 kpi-card">
+          <div class="d-flex align-center justify-space-between">
+            <div>
+              <div class="kpi-label">ORDENS REGISTRADAS</div>
+              <div class="text-h5 font-weight-black text-primary">{{ formatNumber(report.totals.orders) }}</div>
+              <div class="kpi-hint">
+                {{ formatNumber(report.totals.concluded_orders) }} concluídas /
+                {{ formatNumber(report.totals.pending_orders) }} pendentes
+              </div>
+            </div>
+            <v-avatar color="blue-lighten-4" size="44">
+              <v-icon icon="mdi-file-document-multiple" color="primary" size="large"></v-icon>
+            </v-avatar>
+          </div>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="3">
+        <v-card class="elevation-1 border rounded pa-4 h-100 kpi-card kpi-card--warning">
+          <div class="d-flex align-center justify-space-between">
+            <div>
+              <div class="kpi-label">GARRAFÕES PENDENTES</div>
+              <div class="text-h5 font-weight-black text-warning">{{ formatNumber(report.totals.pending_bottles) }}</div>
+              <div class="kpi-hint">Aguardando retirada do cheio</div>
+            </div>
+            <v-avatar color="amber-lighten-4" size="44">
+              <v-icon icon="mdi-clock-outline" color="warning" size="large"></v-icon>
+            </v-avatar>
+          </div>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="3">
+        <v-card class="elevation-1 border rounded pa-4 h-100 kpi-card">
+          <div class="d-flex align-center justify-space-between">
+            <div>
+              <div class="kpi-label">TAXA DE CONCLUSÃO</div>
+              <div class="text-h5 font-weight-black text-success">{{ formatDecimal(report.totals.conclusion_rate) }}%</div>
+              <v-progress-linear
+                :model-value="report.totals.conclusion_rate"
+                color="success"
+                height="6"
+                rounded
+                class="mt-2"
+              ></v-progress-linear>
+            </div>
+            <v-avatar color="green-lighten-4" size="44">
+              <v-icon icon="mdi-check-circle-outline" color="success" size="large"></v-icon>
+            </v-avatar>
+          </div>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="3">
+        <v-card class="elevation-1 border rounded pa-4 h-100 kpi-card" :class="variationClass">
+          <div class="d-flex align-center justify-space-between">
+            <div>
+              <div class="kpi-label">VARIAÇÃO VS. ANTERIOR</div>
+              <div class="text-h5 font-weight-black" :class="variationTextClass">{{ variationText }}</div>
+              <div class="kpi-hint">
+                {{ formatNumber(report.totals.previous_bottles) }} garrafões em {{ report.period.previous_label }}
+              </div>
+            </div>
+            <v-avatar :color="variationAvatarColor" size="44">
+              <v-icon :icon="variationIcon" :color="variationIconColor" size="large"></v-icon>
+            </v-avatar>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- GRÁFICOS PRINCIPAIS -->
+    <v-row dense class="mb-2">
+      <v-col cols="12" lg="8">
+        <v-card class="elevation-1 border rounded h-100">
+          <v-card-title class="bg-grey-lighten-4 py-3 px-4 border-b">
+            <span class="text-subtitle-2 font-weight-bold text-secondary">
+              <v-icon icon="mdi-chart-line" class="me-1"></v-icon>
+              Evolução do consumo — {{ report.period.label }}
+            </span>
+          </v-card-title>
+          <v-card-text class="pa-3 pa-sm-4">
+            <ConsumptionTrendChart :series="report.series" :mode="report.period.mode" />
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" lg="4">
+        <v-card class="elevation-1 border rounded h-100">
+          <v-card-title class="bg-grey-lighten-4 py-3 px-4 border-b">
+            <span class="text-subtitle-2 font-weight-bold text-secondary">
+              <v-icon icon="mdi-swap-horizontal" class="me-1"></v-icon>
+              Tipo de operação
+            </span>
+          </v-card-title>
+          <v-card-text class="pa-4 d-flex justify-center">
+            <OperationDonut
+              :segments="operationSegments"
+              center-label="garrafões"
+              class="w-100"
+            />
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-row dense class="mb-2">
+      <v-col cols="12" lg="7">
+        <v-card class="elevation-1 border rounded h-100">
+          <v-card-title class="bg-grey-lighten-4 py-3 px-4 border-b d-flex justify-space-between align-center">
+            <span class="text-subtitle-2 font-weight-bold text-secondary">
+              <v-icon icon="mdi-podium" class="me-1"></v-icon>
+              Ranking de setores por consumo
+            </span>
+            <v-chip size="x-small" color="primary" variant="tonal" class="font-weight-bold">
+              TOP {{ topSectors.length }}
+            </v-chip>
+          </v-card-title>
+          <v-card-text class="pa-4">
+            <SectorRankingChart :sectors="topSectors" />
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" lg="5">
+        <v-card class="elevation-1 border rounded h-100">
+          <v-card-title class="bg-grey-lighten-4 py-3 px-4 border-b">
+            <span class="text-subtitle-2 font-weight-bold text-secondary">
+              <v-icon icon="mdi-clipboard-check-outline" class="me-1"></v-icon>
+              Situação das ordens
+            </span>
+          </v-card-title>
+          <v-card-text class="pa-4">
+            <OperationDonut
+              :segments="statusSegments"
+              center-label="ordens"
+              class="w-100"
+            />
+
+            <div class="mt-4 pt-3 border-t">
+              <div class="d-flex justify-space-between text-caption mb-1">
+                <span class="text-grey-darken-1">Taxa de conclusão</span>
+                <span class="font-weight-bold text-success">{{ formatDecimal(report.totals.conclusion_rate) }}%</span>
+              </div>
+              <v-progress-linear
+                :model-value="report.totals.conclusion_rate"
+                color="success"
+                height="8"
+                rounded
+              ></v-progress-linear>
+              <div class="text-caption text-grey-darken-1 mt-2">
+                Média de {{ formatDecimal(report.totals.avg_bottles_per_order) }} garrafões por ordem concluída.
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- DETALHAMENTO DO PERÍODO -->
+    <v-card class="elevation-1 border rounded">
+      <v-card-title class="bg-grey-lighten-4 py-3 px-4 border-b d-flex justify-space-between align-center">
+        <span class="text-subtitle-2 font-weight-bold text-secondary">
+          <v-icon icon="mdi-table-eye" class="me-1"></v-icon>
+          Detalhamento por {{ report.period.series_label.toLowerCase() }}
+        </span>
+        <v-chip size="x-small" color="secondary" variant="tonal" class="font-weight-bold">
+          {{ report.period.label }}
+        </v-chip>
+      </v-card-title>
+
+      <div class="table-scroll">
+        <v-table density="compact" hover>
           <thead>
             <tr class="bg-grey-lighten-4 text-caption font-weight-bold">
-              <th>Nº ORDEM</th>
-              <th>TIPO</th>
-              <th>SETOR / LOTAÇÃO</th>
-              <th class="text-center">QTD</th>
-              <th>DATA ENTRADA</th>
-              <th>PREVISÃO / BAIXA</th>
-              <th class="text-center">STATUS</th>
-              <th class="text-center">AÇÕES</th>
+              <th>{{ report.period.series_label }}</th>
+              <th class="text-right">GARRAFÕES CONSUMIDOS</th>
+              <th class="text-center">ORDENS CONCLUÍDAS</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="d in deliveries.data" :key="d.id" class="text-caption">
-              <td class="font-weight-black font-mono text-primary">{{ d.order_number }}</td>
-              <td>
-                <v-chip size="x-small" :color="d.operation_type === 'BATE_VOLTA' ? 'teal' : 'blue-grey'" variant="tonal">
-                  {{ d.operation_type === 'BATE_VOLTA' ? 'BATE VOLTA' : 'PADRÃO' }}
-                </v-chip>
-              </td>
-              <td class="font-weight-medium">{{ d.sector }}</td>
-              <td class="text-center font-weight-black">{{ d.empty_bottles_count }}</td>
-              <td>{{ formatDate(d.reception_date) }}</td>
-              <td>
-                {{ d.status === 'CONCLUIDO' ? formatDate(d.delivery_date) : formatDate(d.estimated_date) }}
-              </td>
-              <td class="text-center">
-                <v-chip
-                  size="x-small"
-                  :color="d.status === 'CONCLUIDO' ? 'success' : 'warning'"
-                  variant="flat"
-                  class="font-weight-bold"
-                >
-                  {{ d.status }}
-                </v-chip>
-              </td>
-              <td class="text-center">
-                <v-btn
-                  size="x-small"
-                  variant="text"
-                  icon="mdi-eye"
-                  color="primary"
-                  title="Ver Comprovante"
-                  @click="openProtocolDialog(d)"
-                ></v-btn>
-              </td>
+            <tr v-for="point in report.series" :key="point.full_label" class="text-caption">
+              <td class="font-weight-medium">{{ point.full_label }}</td>
+              <td class="text-right font-weight-black text-primary">{{ formatNumber(point.bottles) }}</td>
+              <td class="text-center">{{ formatNumber(point.orders) }}</td>
             </tr>
-
-            <tr v-if="!deliveries.data || deliveries.data.length === 0">
-              <td colspan="8" class="text-center py-6 text-grey-darken-1">
-                Nenhum registro encontrado para os filtros selecionados.
-              </td>
+            <tr class="bg-blue-lighten-5 text-caption">
+              <td class="font-weight-black">TOTAL DO PERÍODO</td>
+              <td class="text-right font-weight-black text-primary">{{ formatNumber(report.totals.bottles) }}</td>
+              <td class="text-center font-weight-black">{{ formatNumber(report.totals.concluded_orders) }}</td>
             </tr>
           </tbody>
         </v-table>
-
-        <!-- Paginação -->
-        <v-card-actions v-if="deliveries.links && deliveries.links.length > 3" class="justify-center border-t py-2">
-          <div class="d-flex ga-1">
-            <v-btn
-              v-for="(link, idx) in deliveries.links"
-              :key="idx"
-              size="small"
-              :variant="link.active ? 'elevated' : 'text'"
-              :color="link.active ? 'primary' : 'default'"
-              :disabled="!link.url"
-              @click="goToPage(link.url)"
-            >
-              <span v-html="link.label"></span>
-            </v-btn>
-          </div>
-        </v-card-actions>
-      </v-card>
-    </div>
-
-    <!-- MODAL / DIALOG VISUALIZAR PROTOCOLO -->
-    <v-dialog v-model="dialogProtocol" max-width="380">
-      <v-card class="pa-4 bg-white rounded elevation-3 d-flex flex-column align-center">
-        <ProtocolCard v-if="selectedDeliveryForModal" :delivery="selectedDeliveryForModal" />
-        <v-btn class="mt-3" variant="text" size="small" @click="dialogProtocol = false">
-          Fechar
-        </v-btn>
-      </v-card>
-    </v-dialog>
+      </div>
+    </v-card>
   </AppLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import ProtocolCard from '@/Components/ProtocolCard.vue';
+import ConsumptionTrendChart from '@/Components/Charts/ConsumptionTrendChart.vue';
+import SectorRankingChart from '@/Components/Charts/SectorRankingChart.vue';
+import OperationDonut from '@/Components/Charts/OperationDonut.vue';
 
 const props = defineProps({
-  deliveries: {
+  report: {
     type: Object,
     required: true,
   },
@@ -211,100 +394,183 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
-  stats: {
-    type: Object,
-    default: () => ({}),
+  yearOptions: {
+    type: Array,
+    default: () => [],
+  },
+  monthOptions: {
+    type: Array,
+    default: () => [],
   },
 });
 
-const searchQuery = ref(props.filters.search || '');
-const filterStatus = ref(props.filters.status || 'TODOS');
+const mode = ref(props.filters.mode || 'annual');
+const year = ref(props.filters.year || new Date().getFullYear());
+const month = ref(props.filters.month || new Date().getMonth() + 1);
+const loading = ref(false);
 
-const statusOptions = [
-  { title: 'Todos os Status', value: 'TODOS' },
-  { title: 'Disponível', value: 'DISPONIVEL' },
-  { title: 'Concluído', value: 'CONCLUIDO' },
-];
+const isMonthly = computed(() => mode.value === 'monthly');
 
-const dialogProtocol = ref(false);
-const selectedDeliveryForModal = ref(null);
+const topSectors = computed(() => (props.report.sector_ranking || []).slice(0, 8));
 
-const formatDate = (dateVal) => {
-  if (!dateVal) return '-';
-  const d = new Date(dateVal);
-  if (isNaN(d.getTime())) return dateVal;
-  return d.toLocaleDateString('pt-BR');
-};
+const topSectorName = computed(() => props.report.totals.top_sector?.sector || 'Sem dados');
+
+const operationSegments = computed(() => [
+  {
+    label: 'Fluxo Padrão',
+    value: props.report.operations?.PADRAO?.bottles || 0,
+    color: '#2b6cb0',
+  },
+  {
+    label: 'Bate Volta',
+    value: props.report.operations?.BATE_VOLTA?.bottles || 0,
+    color: '#28a745',
+  },
+]);
+
+const statusSegments = computed(() => [
+  {
+    label: 'Concluídas',
+    value: props.report.status?.CONCLUIDO || 0,
+    color: '#28a745',
+  },
+  {
+    label: 'Pendentes',
+    value: props.report.status?.DISPONIVEL || 0,
+    color: '#ffc107',
+  },
+]);
+
+const variation = computed(() => props.report.totals.variation);
+
+const variationText = computed(() => {
+  if (variation.value === null || variation.value === undefined) {
+    return '—';
+  }
+
+  const prefix = variation.value > 0 ? '+' : '';
+  return `${prefix}${formatDecimal(variation.value)}%`;
+});
+
+const variationClass = computed(() => {
+  if (variation.value === null || variation.value === undefined) return '';
+  return variation.value < 0 ? 'kpi-card--danger' : 'kpi-card--success';
+});
+
+const variationTextClass = computed(() => {
+  if (variation.value === null || variation.value === undefined) return 'text-grey-darken-1';
+  return variation.value < 0 ? 'text-error' : 'text-success';
+});
+
+const variationIcon = computed(() => {
+  if (variation.value === null || variation.value === undefined) return 'mdi-minus';
+  return variation.value < 0 ? 'mdi-trending-down' : 'mdi-trending-up';
+});
+
+const variationIconColor = computed(() => {
+  if (variation.value === null || variation.value === undefined) return 'grey';
+  return variation.value < 0 ? 'error' : 'success';
+});
+
+const variationAvatarColor = computed(() => {
+  if (variation.value === null || variation.value === undefined) return 'grey-lighten-3';
+  return variation.value < 0 ? 'red-lighten-4' : 'green-lighten-4';
+});
+
+const formatNumber = (value) => new Intl.NumberFormat('pt-BR').format(Number(value) || 0);
+
+const formatDecimal = (value) => new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+}).format(Number(value) || 0);
 
 const applyFilters = () => {
+  loading.value = true;
+
   router.get(
     route('entregas.relatorios'),
     {
-      search: searchQuery.value || undefined,
-      status: filterStatus.value !== 'TODOS' ? filterStatus.value : undefined,
+      mode: mode.value,
+      year: year.value,
+      month: isMonthly.value ? month.value : undefined,
     },
-    { preserveState: true, replace: true }
+    {
+      preserveState: true,
+      preserveScroll: true,
+      replace: true,
+      onFinish: () => {
+        loading.value = false;
+      },
+    }
   );
 };
 
-const clearSearch = () => {
-  searchQuery.value = '';
-  applyFilters();
-};
+const downloadReport = (format) => {
+  const params = {
+    mode: mode.value,
+    year: year.value,
+  };
 
-const goToPage = (url) => {
-  if (url) {
-    router.visit(url, { preserveState: true });
+  if (isMonthly.value) {
+    params.month = month.value;
   }
-};
 
-const openProtocolDialog = (delivery) => {
-  selectedDeliveryForModal.value = delivery;
-  dialogProtocol.value = true;
-};
-
-const printReport = () => {
-  window.print();
+  window.location.href = route(`entregas.relatorios.${format}`, params);
 };
 </script>
 
 <style scoped>
-.font-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+.filter-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-/* Estilos de Impressão/Exportação PDF do Relatório SCEA/PCPA */
-@media print {
-  /* Oculta elementos de navegação e controles ao imprimir */
-  .v-app-bar,
-  .v-footer,
-  .nav-tabs-wrapper,
-  .header-branding,
-  .no-print,
-  .v-btn,
-  .v-pagination,
-  .v-select,
-  .v-text-field {
-    display: none !important;
-  }
+.kpi-card {
+  border-left: 4px solid #2b6cb0 !important;
+}
 
-  /* Exibe cabeçalho institucional na impressão */
-  .print-header {
-    display: block !important;
-    text-align: center;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #2b6cb0;
-  }
+.kpi-card--warning {
+  border-left-color: #ffc107 !important;
+}
 
-  /* Garante que a tabela caiba na página */
-  .v-data-table {
-    font-size: 11px !important;
-  }
+.kpi-card--success {
+  border-left-color: #28a745 !important;
+}
 
-  body {
-    background: #fff !important;
-  }
+.kpi-card--danger {
+  border-left-color: #dc3545 !important;
+}
+
+.kpi-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #6b7280;
+  letter-spacing: 0.4px;
+}
+
+.kpi-hint {
+  margin-top: 2px;
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+.table-scroll {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.table-scroll :deep(thead th) {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 </style>
-

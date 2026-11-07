@@ -197,9 +197,11 @@ class WaterDeliveryController extends Controller
     }
 
     /**
-     * Exibe a página de Relatórios e Histórico de Entregas
+     * Exibe a página de Histórico de Entregas.
+     *
+     * O dashboard analítico foi separado para /entregas/relatorios.
      */
-    public function relatoriosPage(Request $request)
+    public function historicoPage(Request $request)
     {
         $query = WaterDelivery::query();
 
@@ -220,49 +222,18 @@ class WaterDeliveryController extends Controller
         }
 
         // Filtro por mês/ano
-        $month = $request->input('month', Carbon::now()->month);
-        $year = $request->input('year', Carbon::now()->year);
-
         if ($request->filled('month')) {
-            $query->whereMonth('reception_date', $month);
+            $query->whereMonth('reception_date', $request->input('month'));
         }
         if ($request->filled('year')) {
-            $query->whereYear('reception_date', $year);
+            $query->whereYear('reception_date', $request->input('year'));
         }
-
-        // Estatísticas Consolidadas
-        $statsBase = WaterDelivery::whereYear('reception_date', $year)
-            ->when($request->filled('month'), fn($q) => $q->whereMonth('reception_date', $month));
-
-        $totalBottles = (clone $statsBase)->sum('empty_bottles_count');
-        $totalDeliveries = (clone $statsBase)->count();
-        $totalPadrao = (clone $statsBase)->where('operation_type', 'PADRAO')->count();
-        $totalBateVolta = (clone $statsBase)->where('operation_type', 'BATE_VOLTA')->count();
-        $totalPendentes = (clone $statsBase)->where('status', 'DISPONIVEL')->count();
-        $totalConcluidas = (clone $statsBase)->where('status', 'CONCLUIDO')->count();
-
-        // Ranking de Setores com mais consumo
-        $topSectors = (clone $statsBase)
-            ->selectRaw('sector, SUM(empty_bottles_count) as total_bottles, COUNT(*) as total_orders')
-            ->groupBy('sector')
-            ->orderByDesc('total_bottles')
-            ->take(5)
-            ->get();
 
         $deliveries = $query->orderByDesc('id')->paginate(15)->withQueryString();
 
-        return Inertia::render('Relatorios', [
+        return Inertia::render('Historico', [
             'deliveries' => $deliveries,
             'filters' => $request->only(['search', 'status', 'month', 'year']),
-            'stats' => [
-                'total_bottles' => (int) $totalBottles,
-                'total_deliveries' => (int) $totalDeliveries,
-                'total_padrao' => (int) $totalPadrao,
-                'total_bate_volta' => (int) $totalBateVolta,
-                'total_pendentes' => (int) $totalPendentes,
-                'total_concluidas' => (int) $totalConcluidas,
-                'top_sectors' => $topSectors,
-            ],
         ]);
     }
 
