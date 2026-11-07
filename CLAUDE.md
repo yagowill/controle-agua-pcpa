@@ -14,7 +14,8 @@ Este repositório contém o **SCEA — Sistema de Controle de Entrega de Água**
 * **PostgreSQL 17** (desenvolvimento e produção)
 * **Dompdf** (PDF) e **PhpSpreadsheet** (XLSX)
 * **Docker Compose** para desenvolvimento
-* **Oracle Cloud Always Free + Caddy** para produção
+* **Render (Docker, plano free) + Neon (PostgreSQL free)** para produção
+* **Oracle Cloud Always Free + Caddy** como alternativa (requer CNPJ institucional)
 
 ---
 
@@ -30,7 +31,8 @@ resources/js/Pages/                              # páginas Inertia/Vue
 routes/web.php                                   # rotas protegidas
 docker/php/                                      # imagem, PHP.ini, OPcache e entrypoint
 compose.yaml                                     # ambiente de desenvolvimento
-compose.prod.yaml                                # produção com Caddy
+compose.prod.yaml                                # produção alternativa com Caddy
+render.yaml                                      # blueprint do Render + Neon
 specs/feature.md                                 # especificação funcional
 ```
 
@@ -77,7 +79,18 @@ O PostgreSQL local escuta em `127.0.0.1:5433`.
 
 ## Produção
 
-O deploy de referência usa `compose.prod.yaml` em uma VM Oracle Cloud Always Free:
+O deploy de referência usa o Render (web service Docker, plano free) com um banco PostgreSQL no Neon, definido em `render.yaml`:
+
+1. Criar o projeto no Neon e copiar a connection string **direta** (`postgresql://...?sslmode=require`).
+2. No Render, criar um Blueprint a partir do repositório.
+3. Preencher os segredos pedidos: `APP_KEY` (`base64:...`) e `DB_URL`.
+4. No primeiro deploy, definir `RUN_SEEDER=true` para criar o administrador inicial; depois voltar a `false`.
+
+O Render aplica as migrations no start, expõe HTTPS automaticamente e verifica `/up` como healthcheck. O serviço dorme após ~15 minutos de inatividade (cold start de ~50 s).
+
+### Alternativa: Oracle Cloud + Caddy
+
+Para quem tem CNPJ institucional:
 
 ```bash
 cp .env.production.example .env.production

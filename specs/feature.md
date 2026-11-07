@@ -35,7 +35,7 @@ O SCEA digitaliza a recepção de garrafões vazios (secos) e a entrega de garra
 | Planilhas | `phpoffice/phpspreadsheet` |
 | Testes | PHPUnit 12 com SQLite `:memory:` |
 | Desenvolvimento | Docker Compose (`app`, `vite`, `postgres`) |
-| Produção | Oracle Cloud Always Free + Docker Compose + Caddy (HTTPS automático) |
+| Produção | Render (web service Docker, plano free) + Neon (PostgreSQL free) |
 
 ### 2.1 Decisões arquiteturais
 
@@ -254,12 +254,17 @@ Criados para acelerar filtros e agregações dos relatórios:
 
 ### 7.3 Produção
 
-* Deploy de referência em VM Oracle Cloud Always Free (ARM Ampere A1).
-* Imagem multi-stage: build de assets, dependências de produção e runtime PHP/Apache.
-* Caddy como reverse proxy, com certificado Let's Encrypt automático.
-* PostgreSQL sem porta pública.
+O destino principal é **Render + Neon**, sem CNPJ e sem cartão:
+
+* Web service Docker no Render, `plan: free`, descrito em `render.yaml`.
+* Banco PostgreSQL no Neon, ligado por `DB_URL` (ligação direta) e `DB_SSLMODE=require`.
+* HTTPS e domínio `*.onrender.com` fornecidos pelo Render; `APP_FORCE_HTTPS=true` e `SESSION_SECURE_COOKIE=true`.
+* Imagem multi-stage: build de assets, dependências de produção e runtime PHP/Apache (último stage = `production`).
 * Migrations e caches (`config`, `route`, `view`) aplicados no entrypoint.
-* Backups do banco sob responsabilidade da operação.
+* `RUN_SEEDER=true` cria o administrador inicial apenas no primeiro deploy.
+* O serviço dorme após ~15 min de inatividade (cold start de ~50 s) e não há backup automático.
+
+**Alternativa:** Oracle Cloud Always Free + Docker Compose + Caddy (exige CNPJ institucional). Nesse caso, o Caddy emite o certificado Let's Encrypt e o PostgreSQL não expõe porta pública. Em ambos os casos, os backups do banco são responsabilidade da operação.
 
 ### 7.4 Localização
 
@@ -301,5 +306,6 @@ Criados para acelerar filtros e agregações dos relatórios:
 6. Exportações PDF, XLSX e CSV são geradas corretamente.
 7. `docker compose exec app php artisan test` passa (52 testes / 279 asserções).
 8. `./vendor/bin/pint --test` passa.
-9. `docker compose -f compose.prod.yaml config` é válido.
-10. A imagem de produção responde `200` em `/up`.
+9. `render.yaml` é válido segundo o schema do Render.
+10. `docker compose -f compose.prod.yaml config` é válido (alternativa Oracle + Caddy).
+11. A imagem de produção responde `200` em `/up`.

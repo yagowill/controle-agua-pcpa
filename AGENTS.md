@@ -27,7 +27,8 @@ Este ficheiro contém as diretrizes técnicas, regras de negócio e padrões arq
 | **PDF** | `dompdf/dompdf` | Relatórios em PDF com gráficos SVG embutidos como data URI. |
 | **Planilhas** | `phpoffice/phpspreadsheet` | Exportação XLSX (resumo, séries, setores e registros). |
 | **Infra local** | Docker + Docker Compose | Serviços `app`, `vite` e `postgres`. |
-| **Produção** | Oracle Cloud Always Free + Docker Compose + Caddy | HTTPS automático via Let's Encrypt. |
+| **Produção** | Render (web service Docker, plano free) + Neon (PostgreSQL free) | Blueprint em `render.yaml`; HTTPS fornecido pelo Render. |
+| **Produção alternativa** | Oracle Cloud Always Free + Docker Compose + Caddy | HTTPS automático via Let's Encrypt (exige CNPJ institucional). |
 | **Versionamento** | Git / GitHub | Conventional Commits em inglês (ex: `feat:`, `fix:`). |
 
 ---
@@ -67,9 +68,11 @@ Este ficheiro contém as diretrizes técnicas, regras de negócio e padrões arq
 │   └── web.php
 ├── specs/feature.md                        # Especificação funcional
 ├── compose.yaml                            # Ambiente de desenvolvimento
-├── compose.prod.yaml                       # Produção (app + postgres + caddy)
+├── compose.prod.yaml                       # Produção alternativa (app + postgres + caddy)
+├── render.yaml                             # Blueprint de deploy no Render + Neon
 ├── .env.example                            # Variáveis do ambiente local
-└── .env.production.example                 # Variáveis do ambiente de produção
+├── .env.production.example                 # Variáveis da produção com Caddy
+└── .env.render.example                     # Referência das variáveis do Render + Neon
 ```
 
 ### 3.1 Fluxo de requisição
@@ -142,9 +145,31 @@ docker compose down
 
 ---
 
-## 🚀 6. Produção (Oracle Cloud Always Free + Caddy)
+## 🚀 6. Produção
 
-### 6.1 Serviços (`compose.prod.yaml`)
+### 6.1 Destino principal — Render + Neon
+
+O deploy oficial de referência é feito com o blueprint `render.yaml`:
+
+| Recurso | Plano | Função |
+| :--- | :--- | :--- |
+| Web service `scea-pcpa` | `free` (512 MB, dorme após ~15 min) | Imagem Docker de produção, HTTPS e domínio `*.onrender.com` |
+| Neon PostgreSQL | `free` (~1 GB, sem expiração) | Banco externo, ligado por `DB_URL` com `DB_SSLMODE=require` |
+
+Regras:
+
+* O Render constrói o **último stage** do `docker/php/Dockerfile` (`production`); o Blueprint não suporta `target`.
+* `dockerfilePath: ./docker/php/Dockerfile`, `dockerContext: .`, `healthCheckPath: /up` e `plan: free`.
+* Segredos (`APP_KEY` e `DB_URL`) usam `sync: false` e são preenchidos no dashboard.
+* `APP_URL` é resolvida por `RENDER_EXTERNAL_URL` (fallback em `config/app.php`).
+* O entrypoint aceita `DB_URL` (banco externo) e respeita `PORT`.
+* `RUN_SEEDER=true` cria o administrador inicial; depois deve voltar a `false`.
+* Migrations e caches (`config`, `route`, `view`) são aplicados no start.
+* O serviço dorme por inatividade (cold start de ~50 s) e não tem backup automático do Neon.
+
+### 6.2 Destino alternativo — Oracle Cloud + Caddy
+
+Para quem tem CNPJ institucional, o repositório mantém o `compose.prod.yaml`:
 
 | Serviço | Função |
 | :--- | :--- |
@@ -152,16 +177,18 @@ docker compose down
 | `postgres` | PostgreSQL 17 sem porta exposta no host |
 | `caddy` | Reverse proxy com HTTPS automático (Let's Encrypt) |
 
-### 6.2 Regras de deploy
+Regras do deploy com Caddy:
 
 * `APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY` obrigatória.
 * `APP_DOMAIN` deve apontar para o domínio público configurado no DNS.
 * `APP_URL` deve usar `https://`.
 * `APP_FORCE_HTTPS=true` e `SESSION_SECURE_COOKIE=true`.
-* Migrations são aplicadas no entrypoint (`php artisan migrate --force`).
-* `config:cache`, `route:cache` e `view:cache` são executados no start.
 * O `postgres` não deve publicar portas no host.
 * Backups do PostgreSQL são responsabilidade da operação (não há backup automático no free tier).
+
+### 6.3 Regras comuns
+
+* Migrations são aplicadas no entrypoint (`php artisan migrate --force`).
 * O entrypoint respeita a variável `PORT` para compatibilidade com plataformas como Render.
 * Em produção com dados reais, avaliar requisitos de LGPD/SLA institucionais antes de usar free tiers.
 
