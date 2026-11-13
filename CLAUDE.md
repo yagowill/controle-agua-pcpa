@@ -14,7 +14,7 @@ Este repositório contém o **SCEA — Sistema de Controle de Entrega de Água**
 * **PostgreSQL 17** (desenvolvimento e produção)
 * **Dompdf** (PDF) e **PhpSpreadsheet** (XLSX)
 * **Docker Compose** para desenvolvimento
-* **Render (Docker, plano free) + Neon (PostgreSQL free)** para produção
+* **Fly.io (Docker, região `gru`) + Neon (PostgreSQL em `aws-sa-east-1`)** para produção
 * **Oracle Cloud Always Free + Caddy** como alternativa (requer CNPJ institucional)
 
 ---
@@ -32,7 +32,8 @@ routes/web.php                                   # rotas protegidas
 docker/php/                                      # imagem, PHP.ini, OPcache e entrypoint
 compose.yaml                                     # ambiente de desenvolvimento
 compose.prod.yaml                                # produção alternativa com Caddy
-render.yaml                                      # blueprint do Render + Neon
+fly.toml                                         # deploy principal no Fly.io + Neon
+.github/workflows/fly-deploy.yml                 # deploy contínuo via GitHub Actions
 specs/feature.md                                 # especificação funcional
 ```
 
@@ -79,14 +80,16 @@ O PostgreSQL local escuta em `127.0.0.1:5433`.
 
 ## Produção
 
-O deploy de referência usa o Render (web service Docker, plano free) com um banco PostgreSQL no Neon, definido em `render.yaml`:
+O deploy de referência usa o Fly.io (região `gru`, São Paulo) com um banco PostgreSQL no Neon (`aws-sa-east-1`), definido em `fly.toml`:
 
-1. Criar o projeto no Neon e copiar a connection string **direta** (`postgresql://...?sslmode=require`).
-2. No Render, criar um Blueprint a partir do repositório.
-3. Preencher os segredos pedidos: `APP_KEY` (`base64:...`) e `DB_URL`.
-4. No primeiro deploy, definir `RUN_SEEDER=true` para criar o administrador inicial; depois voltar a `false`.
+1. Confirmar que o projeto Neon está em `aws-sa-east-1` e copiar a connection string **direta** (`postgresql://...?sslmode=require`).
+2. Reaproveitar a `APP_KEY` do Render (ou gerar uma nova) e definir os segredos:
+   `fly secrets set APP_KEY=... DB_URL=... -a controle-agua-pcpa`.
+3. Executar `fly deploy --remote-only`.
+4. Com o banco de produção reaproveitado, não é necessário rodar o seeder. Numa base nova:
+   `fly ssh console -a controle-agua-pcpa -C "php artisan db:seed --force"`.
 
-O Render aplica as migrations no start, expõe HTTPS automaticamente e verifica `/up` como healthcheck. O serviço dorme após ~15 minutos de inatividade (cold start de ~50 s).
+O Fly.io aplica as migrations no start, expõe HTTPS automaticamente e verifica `/up` como healthcheck. A Machine para por inatividade e volta no primeiro pedido (cold start). O workflow `.github/workflows/fly-deploy.yml` publica a cada push em `main`/`master` usando o segredo `FLY_API_TOKEN`.
 
 ### Alternativa: Oracle Cloud + Caddy
 

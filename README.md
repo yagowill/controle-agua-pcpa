@@ -46,7 +46,7 @@ Arquitetura de **monólito moderno (SPA)**, sem API REST separada.
 | PDF | `dompdf/dompdf` |
 | Planilhas | `phpoffice/phpspreadsheet` |
 | Ambiente local | Docker Compose (`app`, `vite`, `postgres`) |
-| Produção | Render (Docker, plano free) + Neon (PostgreSQL free) |
+| Produção | Fly.io (Machine `shared-cpu-1x`, 512 MB, `gru`) + Neon (PostgreSQL, `aws-sa-east-1`) |
 | Produção alternativa | Oracle Cloud Always Free + Docker Compose + Caddy |
 
 ---
@@ -173,84 +173,134 @@ Ajuste `DB_HOST`/`DB_PORT` no `.env` para o PostgreSQL local.
 
 ---
 
-## 🚀 Deploy de Produção (Render + Neon)
+## 🚀 Deploy de Produção (Fly.io + Neon)
 
-O deploy de referência é 100% gratuito, sem CNPJ e sem cartão: a aplicação corre no **Render** (web service Docker, `plan: free`) e o PostgreSQL fica no **Neon** (`free`, ~1 GB, sem expiração).
+O deploy de referência usa o **Fly.io** para a aplicação, na região `gru` (São Paulo), e o **Neon** para o PostgreSQL, na região `aws-sa-east-1` (também São Paulo). O ficheiro `fly.toml` descreve a Machine, o healthcheck `/up` e as variáveis não secretas.
 
-| Recurso | Plano free | Limitações |
+| Recurso | Configuração | Observações |
 | :--- | :--- | :--- |
-| Render web service | 512 MB de RAM | Dorme após ~15 min de inatividade; cold start de ~50 s |
-| Neon PostgreSQL | ~1 GB, 100 CU-hours | Sem backup automático; histórico de restore curto |
+| Fly.io Machine | `shared-cpu-1x`, 512 MB, `gru` | Para por inatividade e volta no primeiro pedido (cold start) |
+| Neon PostgreSQL | `free`, `aws-sa-east-1` | ~1 GB; backups e restore são responsabilidade da operação |
 
-O blueprint `render.yaml` já descreve o serviço, o healthcheck `/up` e todas as variáveis de ambiente.
+> O Fly.io não tem plano gratuito para organizações novas. Contas pessoais com fatura mensal abaixo de US$ 5 têm o valor dispensado. Uma Machine de 512 MB em `gru`, ligada 24 horas, fica na ordem de US$ 4–5/mês; com auto-stop e pouco tráfego, o custo tende a permanecer dentro da isenção. Confirme os preços em <https://fly.io/docs/about/pricing/>.
 
-### Passo 1 — Criar o banco no Neon
+### Passo 1 — Confirmar o banco no Neon
 
-1. Crie a conta em <https://neon.com> (não pede cartão).
-2. Crie um projeto e copie a **connection string direta** (sem `-pooler`):
+O projeto Neon deve estar em **AWS South America (São Paulo) — `aws-sa-east-1`** para ficar próximo da Machine em `gru`. Confirme a região no painel do Neon (**Project → Region**) ou pelo hostname da connection string:
 
 ```text
-postgresql://usuario:senha@ep-xxxxxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+postgresql://usuario:senha@ep-xxxxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
-> Use a ligação direta para que as migrations e o PDO funcionem sem surpresas de pooling.
-
-### Passo 2 — Gerar a APP_KEY
+Copie a **connection string direta** (sem `-pooler`). Se o projeto ainda estiver noutra região, crie um novo projeto em São Paulo e restaure um dump antes de continuar:
 
 ```bash
-# Gera 32 bytes aleatórios no formato esperado pelo Laravel.
+# Exemplo com o cliente PostgreSQL 17
+pg_dump --no-owner --no-acl -Fc "$OLD_DATABASE_URL" -f scea.dump
+pg_restore --no-owner --no-acl -d "$NEW_DATABASE_URL" scea.dump
+```
+
+> Use a ligação direta para que migrations e PDO funcionem sem surpresas de pooling.
+>
+> Como o Neon é o mesmo banco, **não há cópia de dados**: o Fly.io passa a apontar para a base existente. Após o cutover, não mantenha Render e Fly.io ativos ao mesmo tempo.
+
+### Passo 2 — Reaproveitar a APP_KEY
+
+Reutilize a **mesma `APP_KEY` que está no Render**. Assim as sessões/cookies existentes continuam válidos. Se precisar de gerar uma nova:
+
+```bash
 docker run --rm php:8.4-cli -r 'echo "base64:".base64_encode(random_bytes(32)), PHP_EOL;'
 ```
 
-Copie o valor devolvido no formato `base64:...`. (Com PHP instalado no host, o equivalente é `php -r '...'` com o mesmo código.)
+> Trocar a `APP_KEY` invalida sessões e cookies existentes; evite a mudança sem necessidade.
 
-### Passo 3 — Criar o Blueprint no Render
+### Passo 3 — Configurar os segredos no Fly.io
 
-1. Crie a conta em <https://render.com> (não pede cartão).
-2. **New → Blueprint** e selecione o repositório.
-3. O Render deteta o `render.yaml` e propõe o serviço `scea-pcpa` na região `virginia`.
-4. Confirme a criação.
-
-### Passo 4 — Preencher os segredos
-
-No dashboard do Render, o serviço pede os valores marcados com `sync: false`:
-
-| Variável | Valor |
-| :--- | :--- |
-| `APP_KEY` | `base64:...` gerado no passo 2 |
-| `DB_URL` | connection string direta do Neon |
-
-Todas as outras variáveis (`APP_ENV`, `APP_FORCE_HTTPS`, `SESSION_SECURE_COOKIE`, `DB_SSLMODE`, `CACHE_STORE`, etc.) já vêm do `render.yaml`.
-
-### Passo 5 — Criar o administrador inicial
-
-No primeiro deploy, altere `RUN_SEEDER` para `true` no dashboard. O entrypoint aplica as migrations e executa o `AdminUserSeeder`, que cria:
-
-```text
-yago.martins / Admin@pcpa2026
-```
-
-O primeiro acesso obriga à troca de senha. Depois de entrar e trocar a senha, volte `RUN_SEEDER` para `false`.
-
-> Sem shell no plano free, esta é a forma de criar o primeiro administrador. Se preferir, o seeder é idempotente e ignora utilizadores já existentes.
-
-### Passo 6 — Validar
+O app `controle-agua-pcpa` já está descrito no `fly.toml`. Defina os dois segredos:
 
 ```bash
-curl -fsS https://scea-pcpa.onrender.com/up
+fly secrets set \
+  APP_KEY='base64:...' \
+  DB_URL='postgresql://usuario:senha@ep-xxxxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require' \
+  -a controle-agua-pcpa
 ```
 
-Depois abra `https://scea-pcpa.onrender.com/login` e entre com o utilizador criado. Para usar um domínio próprio, adicione-o em **Settings → Custom Domains** — o Render emite o certificado TLS automaticamente.
+Os restantes valores (`APP_ENV`, `APP_FORCE_HTTPS`, `SESSION_SECURE_COOKIE`, `DB_SSLMODE`, `CACHE_STORE`, `PORT`, etc.) já vêm do bloco `[env]` do `fly.toml`.
+
+### Passo 4 — Alocar IPs e fazer o deploy
+
+```bash
+# Apenas se ainda não existirem IPs para o app
+fly ips allocate-v6 -a controle-agua-pcpa
+fly ips allocate-v4 --shared -a controle-agua-pcpa
+
+fly deploy --remote-only
+```
+
+O primeiro deploy constrói a imagem de produção (stage `production` do `docker/php/Dockerfile`), aplica as migrations e sobe o Apache na porta interna `8080`.
+
+### Passo 5 — Validar
+
+```bash
+curl -fsS https://controle-agua-pcpa.fly.dev/up
+fly logs -a controle-agua-pcpa
+```
+
+Abra `https://controle-agua-pcpa.fly.dev/login`. Como o banco de produção foi reaproveitado, os utilizadores existentes continuam a funcionar. Se estiver a usar uma base **nova**, crie o administrador inicial uma única vez:
+
+```bash
+fly ssh console -a controle-agua-pcpa -C "php artisan db:seed --force"
+```
+
+O seeder é idempotente e cria `yago.martins / Admin@pcpa2026`, com troca de senha obrigatória no primeiro acesso.
+
+### Passo 6 — Domínio próprio (opcional)
+
+```bash
+fly certs add scea.pcpa.pa.gov.br -a controle-agua-pcpa
+fly certs show scea.pcpa.pa.gov.br -a controle-agua-pcpa
+```
+
+Crie no DNS um `CNAME` para `controle-agua-pcpa.fly.dev` (subdomínios) ou os registos `A`/`AAAA` indicados por `fly ips list` (domínio raiz). Depois defina `APP_URL=https://scea.pcpa.pa.gov.br` no bloco `[env]` do `fly.toml` e execute `fly deploy` novamente.
+
+### Passo 7 — Deploy contínuo no GitHub Actions
+
+O workflow `.github/workflows/fly-deploy.yml` já está no repositório e corre a cada push para `main` ou `master`. Crie um token de deploy e guarde-o como segredo `FLY_API_TOKEN` no GitHub (**Settings → Secrets and variables → Actions**):
+
+```bash
+fly tokens create deploy -a controle-agua-pcpa -x 999999h
+```
+
+### Passo 8 — Desligar o Render (cutover)
+
+Depois de validar o Fly.io e, se aplicável, trocar o DNS do domínio próprio:
+
+1. No dashboard do Render, **suspenda** o web service (ou reduza para zero instâncias) para evitar duas aplicações a escrever na mesma base.
+2. Mantenha o serviço suspenso por alguns dias como rollback; o Neon continua a ser o mesmo.
+3. Confirme em `fly logs` que não há erros e que os fluxos de entrega, baixa e relatórios funcionam.
+4. Só então elimine o serviço no Render e o app vazio `controle-agua-pcpa-tender-coral-535` (criado pelo `fly launch`), se existir.
+
+### Operação do dia a dia
+
+```bash
+fly status -a controle-agua-pcpa              # estado da Machine
+fly logs -a controle-agua-pcpa                # logs em tempo real
+fly ssh console -a controle-agua-pcpa         # shell no contentor
+fly apps restart controle-agua-pcpa           # reiniciar
+fly scale show -a controle-agua-pcpa          # CPU/memória atuais
+fly scale memory 1024 -a controle-agua-pcpa   # mais memória para relatórios
+fly secrets list -a controle-agua-pcpa        # segredos (sem valores)
+```
 
 ### Como o deploy funciona
 
-* O Render constrói o **último stage** do `docker/php/Dockerfile` (`production`), com assets compilados e `vendor` sem dependências de dev.
-* O entrypoint respeita a variável `PORT` e aguarda o PostgreSQL — por `DB_URL` quando definida ou por `DB_HOST`/`DB_PORT` no ambiente local.
-* As migrations são aplicadas a cada deploy (`php artisan migrate --force`).
-* `config:cache`, `route:cache` e `view:cache` são gerados no start.
-* `APP_URL` é resolvida por `RENDER_EXTERNAL_URL`; `APP_FORCE_HTTPS=true` garante URLs `https`.
-* Sessões, cache e fila usam o próprio PostgreSQL, porque o Render free não oferece disco persistente.
-* O healthcheck configurado no Blueprint é `/up`.
+* O Fly.io constrói o **stage `production`** do `docker/php/Dockerfile` (`build-target` no `fly.toml`), com assets compilados e `vendor` sem dependências de dev.
+* `PORT=8080` no `[env]` e `internal_port = 8080` no `fly.toml` alinham o Apache com o proxy do Fly.io.
+* O entrypoint aguarda o PostgreSQL (por `DB_URL`), aplica `php artisan migrate --force` e gera os caches `config`, `route` e `view` a cada start.
+* `APP_URL` é resolvida por `FLY_APP_NAME` (`https://<app>.fly.dev`) quando não definida; `APP_FORCE_HTTPS=true` garante URLs `https`.
+* Sessões, cache e fila usam o próprio PostgreSQL. O disco da Machine é efémero, mas a aplicação não guarda uploads.
+* A Machine para após inatividade (`auto_stop_machines = "stop"`) e volta no primeiro pedido; o healthcheck é `/up`.
+* O Neon free não tem backup automático; agende `pg_dump` ou use o histórico de restore do plano.
 
 ### Alternativa: Oracle Cloud Always Free + Caddy
 
@@ -308,7 +358,8 @@ routes/{web,auth}.php
 specs/feature.md            # Especificação funcional
 compose.yaml                # Desenvolvimento
 compose.prod.yaml           # Produção alternativa (Oracle + Caddy)
-render.yaml                 # Blueprint do Render + Neon
+fly.toml                    # Deploy principal no Fly.io + Neon
+.github/workflows/fly-deploy.yml  # Deploy contínuo via GitHub Actions
 ```
 
 ---

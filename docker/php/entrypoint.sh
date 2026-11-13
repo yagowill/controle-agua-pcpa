@@ -9,7 +9,7 @@
 #
 # Produção:
 #   - exige APP_KEY definida por variável de ambiente;
-#   - respeita a variável PORT (Render e plataformas semelhantes);
+#   - respeita a variável PORT (Fly.io e plataformas semelhantes);
 #   - aceita DB_URL (Neon, Aiven, Supabase) além de DB_HOST/DB_PORT;
 #   - aplica migrations, roda o seeder quando RUN_SEEDER=true e otimiza os
 #     caches do Laravel.
@@ -34,7 +34,7 @@ if [ "${APP_ENV:-local}" = "production" ]; then
         exit 1
     fi
 
-    # Algumas plataformas (ex.: Render) injetam a porta em PORT.
+    # O Fly.io usa a porta interna definida em fly.toml (internal_port).
     if [ -n "${PORT:-}" ] && [ "${PORT}" != "80" ]; then
         log "Configurando o Apache para ouvir na porta ${PORT}"
         sed -ri "s/^Listen 80$/Listen ${PORT}/" /etc/apache2/ports.conf

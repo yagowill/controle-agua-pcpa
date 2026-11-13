@@ -35,7 +35,7 @@ O SCEA digitaliza a recepção de garrafões vazios (secos) e a entrega de garra
 | Planilhas | `phpoffice/phpspreadsheet` |
 | Testes | PHPUnit 12 com SQLite `:memory:` |
 | Desenvolvimento | Docker Compose (`app`, `vite`, `postgres`) |
-| Produção | Render (web service Docker, plano free) + Neon (PostgreSQL free) |
+| Produção | Fly.io (Machine Docker, 512 MB, região `gru`) + Neon (PostgreSQL em `aws-sa-east-1`) |
 
 ### 2.1 Decisões arquiteturais
 
@@ -254,15 +254,17 @@ Criados para acelerar filtros e agregações dos relatórios:
 
 ### 7.3 Produção
 
-O destino principal é **Render + Neon**, sem CNPJ e sem cartão:
+O destino principal é **Fly.io + Neon**, com a aplicação e o banco em São Paulo:
 
-* Web service Docker no Render, `plan: free`, descrito em `render.yaml`.
-* Banco PostgreSQL no Neon, ligado por `DB_URL` (ligação direta) e `DB_SSLMODE=require`.
-* HTTPS e domínio `*.onrender.com` fornecidos pelo Render; `APP_FORCE_HTTPS=true` e `SESSION_SECURE_COOKIE=true`.
-* Imagem multi-stage: build de assets, dependências de produção e runtime PHP/Apache (último stage = `production`).
+* App Docker no Fly.io, região `gru`, descrito em `fly.toml`.
+* Banco PostgreSQL no Neon, em `aws-sa-east-1`, ligado por `DB_URL` (ligação direta) e `DB_SSLMODE=require`.
+* HTTPS e domínio `*.fly.dev` fornecidos pelo Fly.io; `APP_FORCE_HTTPS=true` e `SESSION_SECURE_COOKIE=true`.
+* Imagem multi-stage: build de assets, dependências de produção e runtime PHP/Apache (stage `production`).
 * Migrations e caches (`config`, `route`, `view`) aplicados no entrypoint.
-* `RUN_SEEDER=true` cria o administrador inicial apenas no primeiro deploy.
-* O serviço dorme após ~15 min de inatividade (cold start de ~50 s) e não há backup automático.
+* `PORT=8080` e `internal_port = 8080` alinham o Apache com o proxy do Fly.io.
+* `RUN_SEEDER=true` cria o administrador inicial apenas em bases novas; com o banco de produção reaproveitado, manter `false`.
+* A Machine para por inatividade e reinicia no primeiro pedido (cold start); o healthcheck é `/up`.
+* O Neon free não tem backup automático; os backups são responsabilidade da operação.
 
 **Alternativa:** Oracle Cloud Always Free + Docker Compose + Caddy (exige CNPJ institucional). Nesse caso, o Caddy emite o certificado Let's Encrypt e o PostgreSQL não expõe porta pública. Em ambos os casos, os backups do banco são responsabilidade da operação.
 
@@ -306,6 +308,6 @@ O destino principal é **Render + Neon**, sem CNPJ e sem cartão:
 6. Exportações PDF, XLSX e CSV são geradas corretamente.
 7. `docker compose exec app php artisan test` passa (52 testes / 279 asserções).
 8. `./vendor/bin/pint --test` passa.
-9. `render.yaml` é válido segundo o schema do Render.
+9. `fly.toml` é válido (`flyctl config validate`) e o deploy responde no domínio `*.fly.dev`.
 10. `docker compose -f compose.prod.yaml config` é válido (alternativa Oracle + Caddy).
 11. A imagem de produção responde `200` em `/up`.

@@ -53,11 +53,15 @@ return [
     */
 
     /*
-    | Em plataformas como o Render o domínio público é exposto em
-    | RENDER_EXTERNAL_URL. O fallback evita URLs erradas quando APP_URL
-    | não for definida explicitamente.
+    | No Fly.io o nome da aplicação é exposto em FLY_APP_NAME, o que permite
+    | montar o domínio público padrão (*.fly.dev) quando APP_URL não for
+    | definida explicitamente (por exemplo, ao usar um domínio próprio).
     */
-    'url' => env('APP_URL', env('RENDER_EXTERNAL_URL', 'http://localhost')),
+    'url' => env('APP_URL') ?: (
+        env('FLY_APP_NAME')
+            ? 'https://'.env('FLY_APP_NAME').'.fly.dev'
+            : 'http://localhost'
+    ),
 
     /*
     |--------------------------------------------------------------------------
@@ -66,7 +70,7 @@ return [
     |
     | Quando verdadeiro e APP_ENV=production, todas as URLs geradas pelo
     | Laravel usam https. Necessário quando o TLS é terminado por um proxy
-    | reverso (Caddy, Render, etc.).
+    | reverso (Caddy, Fly.io, etc.).
     |
     */
 
